@@ -1,29 +1,40 @@
 import './style.css'
-import { initRouter, registerRoute } from './app/router.js'
+import { initRouter, navigateTo, registerRoute } from './app/router.js'
 import { ROUTES } from './utils/constants.js'
-import { hydrateAuthFromStorage, logout } from './services/authService.js'
+import { hydrateAuthFromStorage, isAuthenticated, logout } from './services/authService.js'
 import { createLoginPage } from './pages/LoginPage.js'
 import { createRegisterPage } from './pages/RegisterPage.js'
 import { redirectIfAuthenticated, requireAuth } from './app/guards.js'
 
 const createPage = (title) => {
+  const authenticated = isAuthenticated()
+  const authLinks = authenticated
+    ? `
+      <a data-link href="${ROUTES.DASHBOARD}" class="text-indigo-300 hover:underline">Dashboard</a>
+      <button id="logout-btn" class="text-red-300 hover:underline">Déconnexion</button>
+    `
+    : `
+      <a data-link href="${ROUTES.LOGIN}" class="text-indigo-300 hover:underline">Connexion</a>
+      <a data-link href="${ROUTES.REGISTER}" class="text-indigo-300 hover:underline">Inscription</a>
+    `
+
   const el = document.createElement('main')
   el.className = 'min-h-screen bg-slate-900 p-8 text-white'
   el.innerHTML = `
     <nav class="mb-6 flex gap-4 text-sm">
-    <a data-link href="${ROUTES.DASHBOARD}" class="text-indigo-300 hover:underline">Dashboard</a>
       <a data-link href="${ROUTES.PRODUCTS}" class="text-indigo-300 hover:underline">Produits</a>
-      <a data-link href="${ROUTES.LOGIN}" class="text-indigo-300 hover:underline">Login</a>
-      <a data-link href="${ROUTES.REGISTER}" class="text-indigo-300 hover:underline">Register</a>
-      <button id="logout-btn" class="text-red-300 hover:underline">Logout</button>
+      ${authLinks}
     </nav>
     <h1 class="text-3xl font-bold">${title}</h1>
   `
 
   const logoutButton = el.querySelector('#logout-btn')
-  logoutButton.addEventListener('click', async () => {
-    await logout()
-  })
+  if (logoutButton) {
+    logoutButton.addEventListener('click', async () => {
+      await logout()
+      navigateTo(ROUTES.LOGIN)
+    })
+  }
 
   return el
 }

@@ -1,6 +1,7 @@
 import { login } from '../services/authService.js'
 import { ROUTES } from '../utils/constants.js'
 import { navigateTo } from '../app/router.js'
+import { validateAuthForm } from '../utils/validators.js'
 
 export const createLoginPage = () => {
   const page = document.createElement('main')
@@ -41,8 +42,9 @@ export const createLoginPage = () => {
     const email = String(formData.get('email') ?? '').trim()
     const password = String(formData.get('password') ?? '').trim()
 
-    if (!email || !password) {
-      errorBox.textContent = 'Tous les champs sont obligatoires.'
+    const validationError = validateAuthForm({ email, password })
+    if (validationError) {
+      errorBox.textContent = validationError
       return
     }
 
