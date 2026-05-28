@@ -43,7 +43,11 @@ const createPage = (title) => {
   const logoutButton = el.querySelector('#logout-btn')
   if (logoutButton) {
     logoutButton.addEventListener('click', async () => {
-      await logout()
+      try {
+        await logout()
+      } catch {
+        // En dev sans backend/CORS, on garde une deconnexion locale non bloquante.
+      }
       navigateTo(ROUTES.LOGIN)
     })
   }

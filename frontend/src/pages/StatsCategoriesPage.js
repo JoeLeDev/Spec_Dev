@@ -1,6 +1,6 @@
 import { getCategoryStats } from '../services/productService.js'
 
-// Cree l entete du tableau de statistiques categories.
+// Création de l'entête du tableau de statistiques categories.
 const createStatsTableHead = () => {
   const thead = document.createElement('thead')
   thead.className = 'bg-slate-700'
