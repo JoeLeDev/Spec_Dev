@@ -4,8 +4,12 @@ import { ROUTES } from './utils/constants.js'
 import { hydrateAuthFromStorage, isAuthenticated, logout } from './services/authService.js'
 import { createLoginPage } from './pages/LoginPage.js'
 import { createRegisterPage } from './pages/RegisterPage.js'
+import { createProductsPage } from './pages/ProductsPage.js'
+import { createCartPage } from './pages/CartPage.js'
+import { createProductDetailPage } from './pages/ProductDetailPage.js'
 import { redirectIfAuthenticated, requireAuth } from './app/guards.js'
 
+// Création de la page
 const createPage = (title) => {
   const authenticated = isAuthenticated()
   const authLinks = authenticated
@@ -23,6 +27,7 @@ const createPage = (title) => {
   el.innerHTML = `
     <nav class="mb-6 flex gap-4 text-sm">
       <a data-link href="${ROUTES.PRODUCTS}" class="text-indigo-300 hover:underline">Produits</a>
+      <a data-link href="${ROUTES.CART}" class="text-indigo-300 hover:underline">Panier</a>
       ${authLinks}
     </nav>
     <h1 class="text-3xl font-bold">${title}</h1>
@@ -39,9 +44,21 @@ const createPage = (title) => {
   return el
 }
 
+// Création de la page avec le layout
+const withLayout = (contentFactory) => (routeContext = {}) => {
+  const shell = createPage('')
+  const title = shell.querySelector('h1')
+  if (title) title.remove()
+  shell.append(contentFactory(routeContext))
+  return shell
+}
+
+// Enregistrement des routes
 registerRoute(ROUTES.LOGIN, redirectIfAuthenticated(createLoginPage))
 registerRoute(ROUTES.REGISTER, redirectIfAuthenticated(createRegisterPage))
-registerRoute(ROUTES.PRODUCTS, () => createPage('Produits'))
+registerRoute(ROUTES.PRODUCTS, withLayout(createProductsPage))
+registerRoute(ROUTES.PRODUCT_DETAIL, withLayout(createProductDetailPage))
+registerRoute(ROUTES.CART, withLayout(createCartPage))
 registerRoute(ROUTES.DASHBOARD, requireAuth(() => createPage('Dashboard')))
 registerRoute('/404', () => createPage('404'))
 

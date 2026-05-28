@@ -1,6 +1,6 @@
 import { apiRequest } from './apiClient.js'
 import { STORAGE_KEYS } from '../utils/constants.js'
-import { getState, setState } from '../app/Store.js'
+import { getState, setState } from '../app/store.js'
 
 const saveSession = ({ token, csrfToken, user }) => {
   if (token) localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token)
