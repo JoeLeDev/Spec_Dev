@@ -12,6 +12,7 @@ export const ROUTES = {
   PRODUCTS: '/products',
   PRODUCT_DETAIL: '/products/:id',
   CART: '/cart',
+  STATS_CATEGORIES: '/stats/categories',
   DASHBOARD: '/dashboard',
   PRODUCT_NEW: '/products/new',
   CSP_REPORT: '/csp-report',

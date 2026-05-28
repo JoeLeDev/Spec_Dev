@@ -1,4 +1,9 @@
-import { getCartItems, removeFromCart } from '../services/cartService.js'
+import {
+  clearCart,
+  getCartItems,
+  removeFromCart,
+  updateCartItemQuantity,
+} from '../services/cartService.js'
 
 const computeTotal = (items) =>
   items.reduce(
@@ -20,6 +25,10 @@ export const createCartPage = () => {
   const total = document.createElement('p')
   total.className = 'text-lg font-semibold text-indigo-300'
 
+  const clearButton = document.createElement('button')
+  clearButton.className = 'rounded bg-slate-700 px-3 py-2 text-sm hover:bg-slate-600'
+  clearButton.textContent = 'Vider le panier'
+
   const render = () => {
     const items = getCartItems()
     list.innerHTML = ''
@@ -36,11 +45,36 @@ export const createCartPage = () => {
     items.forEach((item) => {
       const row = document.createElement('article')
       row.className =
-        'flex items-center justify-between rounded border border-slate-700 bg-slate-800 p-3'
+        'flex flex-col gap-3 rounded border border-slate-700 bg-slate-800 p-3 sm:flex-row sm:items-center sm:justify-between'
 
       const info = document.createElement('p')
       info.className = 'text-sm'
       info.textContent = `${item.label} x${item.quantity} - ${Number(item.price).toFixed(2)} EUR`
+
+      const quantityControls = document.createElement('div')
+      quantityControls.className = 'flex items-center gap-2'
+
+      const minusButton = document.createElement('button')
+      minusButton.className = 'rounded bg-slate-700 px-2 py-1 text-sm hover:bg-slate-600'
+      minusButton.textContent = '-'
+      minusButton.addEventListener('click', () => {
+        updateCartItemQuantity(item.id, Number(item.quantity) - 1)
+        render()
+      })
+
+      const quantity = document.createElement('span')
+      quantity.className = 'min-w-8 text-center text-sm font-semibold'
+      quantity.textContent = String(item.quantity)
+
+      const plusButton = document.createElement('button')
+      plusButton.className = 'rounded bg-slate-700 px-2 py-1 text-sm hover:bg-slate-600'
+      plusButton.textContent = '+'
+      plusButton.addEventListener('click', () => {
+        updateCartItemQuantity(item.id, Number(item.quantity) + 1)
+        render()
+      })
+
+      quantityControls.append(minusButton, quantity, plusButton)
 
       const removeButton = document.createElement('button')
       removeButton.className = 'rounded bg-red-500 px-3 py-1 text-sm hover:bg-red-400'
@@ -50,14 +84,23 @@ export const createCartPage = () => {
         render()
       })
 
-      row.append(info, removeButton)
+      const actions = document.createElement('div')
+      actions.className = 'flex items-center gap-2'
+      actions.append(quantityControls, removeButton)
+
+      row.append(info, actions)
       list.append(row)
     })
 
     total.textContent = `Total: ${computeTotal(items).toFixed(2)} EUR`
   }
 
+  clearButton.addEventListener('click', () => {
+    clearCart()
+    render()
+  })
+
   render()
-  page.append(heading, list, total)
+  page.append(heading, clearButton, list, total)
   return page
 }

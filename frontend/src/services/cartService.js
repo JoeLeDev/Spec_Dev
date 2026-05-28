@@ -14,6 +14,11 @@ const readCart = () => {
 
 const saveCart = (items) => {
   localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(items))
+  window.dispatchEvent(
+    new CustomEvent('cart:updated', {
+      detail: { count: items.reduce((total, item) => total + Number(item.quantity ?? 0), 0) },
+    })
+  )
 }
 
 export const getCartItems = () => readCart()
@@ -45,4 +50,20 @@ export const removeFromCart = (productId) => {
   const updated = readCart().filter((item) => Number(item.id) !== Number(productId))
   saveCart(updated)
   return updated
+}
+
+export const updateCartItemQuantity = (productId, nextQuantity) => {
+  const quantity = Number(nextQuantity)
+  if (quantity <= 0) return removeFromCart(productId)
+
+  const updated = readCart().map((item) =>
+    Number(item.id) === Number(productId) ? { ...item, quantity } : item
+  )
+  saveCart(updated)
+  return updated
+}
+
+export const clearCart = () => {
+  saveCart([])
+  return []
 }

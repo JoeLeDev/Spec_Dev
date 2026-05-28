@@ -24,6 +24,12 @@ const MOCK_PRODUCTS = [
   },
 ]
 
+const MOCK_CATEGORY_STATS = [
+  { nom: 'Informatique', compte: 1 },
+  { nom: 'Maison', compte: 1 },
+  { nom: 'Sport', compte: 1 },
+]
+
 // Pour récupérer tous les produits
 export const getProducts = async () => {
   try {
@@ -62,4 +68,15 @@ export const getProductById = async (productId) => {
 
   const products = await getProducts()
   return products.find((product) => Number(product.id) === Number(productId)) ?? null
+}
+
+// Pour recuperer les statistiques de categories (API puis fallback local)
+export const getCategoryStats = async () => {
+  try {
+    const data = await apiRequest('/stats/categories', { method: 'GET' })
+    if (Array.isArray(data)) return data
+    return MOCK_CATEGORY_STATS
+  } catch {
+    return MOCK_CATEGORY_STATS
+  }
 }

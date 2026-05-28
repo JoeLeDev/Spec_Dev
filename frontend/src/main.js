@@ -7,11 +7,14 @@ import { createRegisterPage } from './pages/RegisterPage.js'
 import { createProductsPage } from './pages/ProductsPage.js'
 import { createCartPage } from './pages/CartPage.js'
 import { createProductDetailPage } from './pages/ProductDetailPage.js'
+import { createDashboardPage } from './pages/DashboardPage.js'
+import { getCartCount } from './services/cartService.js'
 import { redirectIfAuthenticated, requireAuth } from './app/guards.js'
 
 // Création de la page
 const createPage = (title) => {
   const authenticated = isAuthenticated()
+  const cartCount = getCartCount()
   const authLinks = authenticated
     ? `
       <a data-link href="${ROUTES.DASHBOARD}" class="text-indigo-300 hover:underline">Dashboard</a>
@@ -27,7 +30,10 @@ const createPage = (title) => {
   el.innerHTML = `
     <nav class="mb-6 flex gap-4 text-sm">
       <a data-link href="${ROUTES.PRODUCTS}" class="text-indigo-300 hover:underline">Produits</a>
-      <a data-link href="${ROUTES.CART}" class="text-indigo-300 hover:underline">Panier</a>
+      <a data-link href="${ROUTES.CART}" class="text-indigo-300 hover:underline">
+        Panier (<span data-cart-count>${cartCount}</span>)
+      </a>
+      <a data-link href="${ROUTES.STATS_CATEGORIES}" class="text-indigo-300 hover:underline">Stats</a>
       ${authLinks}
     </nav>
     <h1 class="text-3xl font-bold">${title}</h1>
@@ -42,6 +48,13 @@ const createPage = (title) => {
   }
 
   return el
+}
+
+const updateCartBadges = () => {
+  const count = getCartCount()
+  document.querySelectorAll('[data-cart-count]').forEach((node) => {
+    node.textContent = String(count)
+  })
 }
 
 // Création de la page avec le layout
@@ -59,8 +72,10 @@ registerRoute(ROUTES.REGISTER, redirectIfAuthenticated(createRegisterPage))
 registerRoute(ROUTES.PRODUCTS, withLayout(createProductsPage))
 registerRoute(ROUTES.PRODUCT_DETAIL, withLayout(createProductDetailPage))
 registerRoute(ROUTES.CART, withLayout(createCartPage))
+registerRoute(ROUTES.STATS_CATEGORIES, withLayout(createDashboardPage))
 registerRoute(ROUTES.DASHBOARD, requireAuth(() => createPage('Dashboard')))
 registerRoute('/404', () => createPage('404'))
 
 hydrateAuthFromStorage()
+window.addEventListener('cart:updated', updateCartBadges)
 initRouter()
