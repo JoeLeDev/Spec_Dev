@@ -102,10 +102,9 @@ Pour info je me suis aidée de Claude pour rédiger les tests.
 
 | Méthode | URL | Description |
 |---|---|---|
-| POST | `/products` | Crée un produit |
-| PUT | `/products/:id` | Modifie un produit |
-| DELETE | `/products/:id` | Supprime un produit |
-| POST | `/products/:id/images` | Upload sécurisé d'une image |
+| POST | `/products` | Crée un produit. Body `multipart/form-data` : champs texte + champ `images` (multi-fichiers, jusqu'à 10) |
+| PUT | `/products/:id` | Modifie un produit. Mêmes formats. Les images jointes s'ajoutent au produit |
+| DELETE | `/products/:id` | Supprime un produit (et toutes ses images en cascade) |
 
 ## Sécurité en place
 
