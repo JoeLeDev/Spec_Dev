@@ -3,25 +3,28 @@ import { MOCK_STORAGE_KEYS } from '../utils/constants.js'
 
 const MOCK_PRODUCTS = [
   {
-    id: 1,
+    id: '1',
     label: 'Clavier mecanique',
     description: 'Clavier compact switchs rouges.',
     price: 89.9,
     category: 'Informatique',
+    images: [],
   },
   {
-    id: 2,
+    id: '2',
     label: 'Lampe de bureau LED',
     description: 'Intensite reglable et port USB.',
     price: 29.5,
     category: 'Maison',
+    images: [],
   },
   {
-    id: 3,
+    id: '3',
     label: 'Tapis de yoga',
     description: 'Surface antiderapante 6mm.',
     price: 24.99,
     category: 'Sport',
+    images: [],
   },
 ]
 
@@ -30,6 +33,34 @@ const MOCK_CATEGORY_STATS = [
   { nom: 'Maison', compte: 1 },
   { nom: 'Sport', compte: 1 },
 ]
+
+// Indique si l erreur provient d un probleme reseau (backend injoignable).
+const isNetworkError = (error) => {
+  const message = String(error?.message ?? '').toLowerCase()
+  return (
+    error instanceof TypeError ||
+    message.includes('joindre le serveur') ||
+    message.includes('erreur reseau')
+  )
+}
+
+// Convertit un produit API (libelle/prix/categorie) vers le modele front.
+export const mapProductFromApi = (product) => ({
+  id: product.id,
+  label: product.libelle ?? product.label ?? 'Produit',
+  description: product.description ?? '',
+  price: Number(product.prix ?? product.price ?? 0),
+  category: product.categorie ?? product.category ?? 'N/A',
+  images: product.images ?? [],
+})
+
+// Convertit un payload front vers le format API backend.
+export const mapProductToApi = (payload) => ({
+  libelle: payload.label,
+  description: payload.description,
+  prix: Number(payload.price),
+  categorie: payload.category,
+})
 
 // Lit la liste locale des produits mockes.
 const readMockProducts = () => {
@@ -56,10 +87,11 @@ const getLocalProducts = () => readMockProducts() ?? structuredClone(MOCK_PRODUC
 export const getProducts = async () => {
   try {
     const data = await apiRequest('/products', { method: 'GET' })
-    if (Array.isArray(data)) return data
+    if (Array.isArray(data)) return data.map(mapProductFromApi)
     return getLocalProducts()
-  } catch {
-    return getLocalProducts()
+  } catch (error) {
+    if (isNetworkError(error)) return getLocalProducts()
+    throw error
   }
 }
 
@@ -86,81 +118,97 @@ export const getProductById = async (productId) => {
 
   try {
     const data = await apiRequest(`/products/${productId}`, { method: 'GET' })
-    if (data && typeof data === 'object') return data
-  } catch {
-    // Fallback local ci-dessous.
+    if (data && typeof data === 'object') return mapProductFromApi(data)
+  } catch (error) {
+    if (!isNetworkError(error)) throw error
   }
 
   const products = await getProducts()
-  return products.find((product) => Number(product.id) === Number(productId)) ?? null
+  return products.find((product) => String(product.id) === String(productId)) ?? null
 }
 
-// Pour creer un produit (API puis fallback local)
+// Pour creer un produit via l API (fallback mock uniquement si reseau down)
 export const createProduct = async (payload) => {
+  const apiPayload = mapProductToApi(payload)
+
   try {
     const data = await apiRequest('/products', {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: JSON.stringify(apiPayload),
     })
-    if (data && typeof data === 'object') return data
-  } catch {
-    // Fallback local ci-dessous.
+    if (data && typeof data === 'object') return mapProductFromApi(data)
+    throw new Error('Reponse API invalide lors de la creation.')
+  } catch (error) {
+    if (!isNetworkError(error)) throw error
   }
 
   const products = await getProducts()
   const created = {
-    ...payload,
-    id: Date.now(),
+    id: String(Date.now()),
+    label: payload.label,
+    description: payload.description,
     price: Number(payload.price),
+    category: payload.category,
+    images: [],
   }
   writeMockProducts([...products, created])
   return created
 }
 
-// Pour mettre a jour un produit (API puis fallback local)
+// Pour mettre a jour un produit via l API
 export const updateProduct = async (productId, payload) => {
+  const apiPayload = mapProductToApi(payload)
+
   try {
     const data = await apiRequest(`/products/${productId}`, {
       method: 'PUT',
-      body: JSON.stringify(payload),
+      body: JSON.stringify(apiPayload),
     })
-    if (data && typeof data === 'object') return data
-  } catch {
-    // Fallback local ci-dessous.
+    if (data && typeof data === 'object') return mapProductFromApi(data)
+    throw new Error('Reponse API invalide lors de la mise a jour.')
+  } catch (error) {
+    if (!isNetworkError(error)) throw error
   }
 
   const products = await getProducts()
   const updated = products.map((product) =>
-    Number(product.id) === Number(productId)
-      ? { ...product, ...payload, id: Number(productId), price: Number(payload.price) }
+    String(product.id) === String(productId)
+      ? {
+          ...product,
+          label: payload.label,
+          description: payload.description,
+          price: Number(payload.price),
+          category: payload.category,
+        }
       : product
   )
   writeMockProducts(updated)
-  return updated.find((product) => Number(product.id) === Number(productId)) ?? null
+  return updated.find((product) => String(product.id) === String(productId)) ?? null
 }
 
-// Pour supprimer un produit (API puis fallback local)
+// Pour supprimer un produit via l API
 export const deleteProduct = async (productId) => {
   try {
     await apiRequest(`/products/${productId}`, { method: 'DELETE' })
     return true
-  } catch {
-    // Fallback local ci-dessous.
+  } catch (error) {
+    if (!isNetworkError(error)) throw error
   }
 
   const products = await getProducts()
-  const updated = products.filter((product) => Number(product.id) !== Number(productId))
+  const updated = products.filter((product) => String(product.id) !== String(productId))
   writeMockProducts(updated)
   return true
 }
 
-// Pour recuperer les statistiques de categories (API puis fallback local)
+// Pour recuperer les statistiques de categories
 export const getCategoryStats = async () => {
   try {
-    const data = await apiRequest('/stats/categories', { method: 'GET' })
+    const data = await apiRequest('/stats', { method: 'GET' })
     if (Array.isArray(data)) return data
     return MOCK_CATEGORY_STATS
-  } catch {
-    return MOCK_CATEGORY_STATS
+  } catch (error) {
+    if (isNetworkError(error)) return MOCK_CATEGORY_STATS
+    throw error
   }
 }

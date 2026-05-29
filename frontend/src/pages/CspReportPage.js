@@ -23,7 +23,7 @@ const createReportRow = (report) => {
   return row
 }
 
-// Construit la page des rapports CSP (acces connecte uniquement).
+// Construit la page des rapports CSP.
 export const createCspReportPage = () => {
   const page = document.createElement('section')
   page.className = 'space-y-4'
@@ -35,7 +35,7 @@ export const createCspReportPage = () => {
   const info = document.createElement('p')
   info.className = 'text-sm text-slate-300'
   info.textContent =
-    'Dernieres violations CSP detectees. Les nonces CSP doivent etre injectes cote serveur dans index.html.'
+    'Dernieres violations CSP depuis l API backend (/csp-reports). Si vide, le endpoint backend n est pas encore disponible.'
 
   const loading = document.createElement('p')
   loading.className = 'text-sm text-slate-300'

@@ -1,4 +1,5 @@
 import { getCategoryStats } from '../services/productService.js'
+import { clearElement, setSafeText } from '../utils/dom.js'
 
 // Création de l'entête du tableau de statistiques categories.
 const createStatsTableHead = () => {
@@ -20,11 +21,11 @@ const createStatsRow = (item) => {
 
   const categoryCell = document.createElement('td')
   categoryCell.className = 'px-4 py-2 text-sm'
-  categoryCell.textContent = item.nom ?? 'N/A'
+  setSafeText(categoryCell, item.nom ?? 'N/A')
 
   const countCell = document.createElement('td')
   countCell.className = 'px-4 py-2 text-sm'
-  countCell.textContent = String(Number(item.compte ?? 0))
+  setSafeText(countCell, String(Number(item.compte ?? 0)))
 
   row.append(categoryCell, countCell)
   return row
@@ -61,12 +62,15 @@ export const createStatsCategoriesPage = () => {
   getCategoryStats()
     .then((items) => {
       loading.remove()
-      tbody.innerHTML = ''
+      clearElement(tbody)
 
       if (!items.length) {
         const emptyRow = document.createElement('tr')
-        emptyRow.innerHTML =
-          '<td class="px-4 py-3 text-sm text-slate-300" colspan="2">Aucune statistique disponible.</td>'
+        const emptyCell = document.createElement('td')
+        emptyCell.colSpan = 2
+        emptyCell.className = 'px-4 py-3 text-sm text-slate-300'
+        setSafeText(emptyCell, 'Aucune statistique disponible.')
+        emptyRow.append(emptyCell)
         tbody.append(emptyRow)
         return
       }

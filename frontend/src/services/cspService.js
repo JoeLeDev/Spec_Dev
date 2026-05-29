@@ -1,35 +1,31 @@
 import { apiRequest } from './apiClient.js'
-import { MOCK_STORAGE_KEYS } from '../utils/constants.js'
 
-const MOCK_CSP_REPORTS = [
-  {
-    date: '2026-05-28T14:00:00.000Z',
-    directive: 'script-src',
-    blockedUri: 'inline',
-    documentUri: 'http://localhost:5173/products',
-  },
-]
+const CSP_ENDPOINTS = ['/csp-reports', '/csp/reports']
 
-// Lit les rapports CSP stockes localement.
-const readLocalCspReports = () => {
-  const raw = localStorage.getItem(MOCK_STORAGE_KEYS.CSP_REPORTS)
-  if (!raw) return MOCK_CSP_REPORTS
+// Normalise un rapport CSP API vers le format affiche front.
+const mapCspReportFromApi = (report) => ({
+  date: report.date ?? report.createdAt ?? report.timestamp ?? 'N/A',
+  directive: report.directive ?? report.violatedDirective ?? 'N/A',
+  blockedUri: report.blockedUri ?? report.blockedURL ?? 'N/A',
+  documentUri: report.documentUri ?? report.documentURL ?? report.sourceFile ?? 'N/A',
+})
 
-  try {
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed : MOCK_CSP_REPORTS
-  } catch {
-    return MOCK_CSP_REPORTS
+// Tente de charger les rapports depuis le premier endpoint disponible.
+const fetchFromApi = async () => {
+  let lastError = null
+
+  for (const endpoint of CSP_ENDPOINTS) {
+    try {
+      const data = await apiRequest(endpoint, { method: 'GET' })
+      if (Array.isArray(data)) return data.map(mapCspReportFromApi)
+      if (data && Array.isArray(data.reports)) return data.reports.map(mapCspReportFromApi)
+    } catch (error) {
+      lastError = error
+    }
   }
+
+  throw lastError ?? new Error('Aucun endpoint CSP report disponible cote backend.')
 }
 
-// Recupere les derniers rapports CSP.
-export const getCspReports = async () => {
-  try {
-    const data = await apiRequest('/csp-reports', { method: 'GET' })
-    if (Array.isArray(data)) return data
-    return readLocalCspReports()
-  } catch {
-    return readLocalCspReports()
-  }
-}
+// Recupere les derniers rapports CSP depuis l API backend.
+export const getCspReports = async () => fetchFromApi()

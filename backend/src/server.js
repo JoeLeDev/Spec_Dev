@@ -7,14 +7,19 @@ import productsRouter from './products/products.js';
 import statsRouter from './stats/stats.js';
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 
-//cors commun aux routes métier
-//n'autorise que le front à faire des requêtes
-const corsFront = cors({ origin: 'http://localhost:3000', credentials : true });
+// CORS front (auth + produits) : origine Vite sur le port 3000.
+const corsFront = cors({
+  origin: 'http://localhost:5173',
+  credentials: true,
+});
 
-//cors dédié à /stats qui doit être ouvert à toutes les IP
-const corsOuvert = cors({ origin: '*' });
+// CORS stats : accessible depuis n'importe quelle origine (reflete l'Origin entrant).
+const corsOuvert = cors({
+  origin: true,
+  credentials: true,
+});
 
 app.use(express.json());
 

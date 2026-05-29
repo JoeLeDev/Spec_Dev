@@ -14,11 +14,16 @@ export const createDashboardPage = () => {
 
   const todo = document.createElement('ul')
   todo.className = 'list-disc space-y-1 pl-5 text-sm text-slate-200'
-  todo.innerHTML = `
-    <li>Ajouter un resume du compte connecte</li>
-    <li>Ajouter des raccourcis vers le CRUD produit</li>
-    <li>Garder cette page protegee par auth guard</li>
-  `
+
+  ;[
+    'Ajouter un resume du compte connecte',
+    'Ajouter des raccourcis vers le CRUD produit',
+    'Garder cette page protegee par auth guard',
+  ].forEach((item) => {
+    const li = document.createElement('li')
+    li.textContent = item
+    todo.append(li)
+  })
 
   page.append(heading, subtitle, todo)
   return page

@@ -1,25 +1,20 @@
 import { apiRequest } from './apiClient.js'
-import { STORAGE_KEYS } from '../utils/constants.js'
 import { getState, setState } from '../app/store.js'
 
-const saveSession = ({ token, csrfToken, user }) => {
-  if (token) localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token)
-  if (csrfToken) localStorage.setItem(STORAGE_KEYS.CSRF_TOKEN, csrfToken)
-
+// Met a jour le store avec l utilisateur connecte.
+const saveSession = (user) => {
   setState((prevState) => ({
     ...prevState,
     auth: {
-      isAuthenticated: Boolean(token),
-      token: token ?? null,
+      isAuthenticated: Boolean(user),
+      token: null,
       user: user ?? null,
     },
   }))
 }
 
+// Reinitialise l etat auth local.
 const clearSession = () => {
-  localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN)
-  localStorage.removeItem(STORAGE_KEYS.CSRF_TOKEN)
-
   setState((prevState) => ({
     ...prevState,
     auth: {
@@ -30,50 +25,45 @@ const clearSession = () => {
   }))
 }
 
+// Inscription via POST /auth/register.
 export const register = async ({ email, password }) => {
-  return apiRequest('/register', {
+  return apiRequest('/auth/register', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   })
 }
 
+// Connexion via POST /auth/login (cookie de session).
 export const login = async ({ email, password }) => {
-  const data = await apiRequest('/login', {
+  const user = await apiRequest('/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   })
 
-  saveSession({
-    token: data?.token,
-    csrfToken: data?.csrfToken,
-    user: data?.user,
-  })
-
-  return data
+  saveSession(user)
+  return user
 }
 
+// Deconnexion via POST /auth/logout.
 export const logout = async () => {
   try {
-    await apiRequest('/logout', { method: 'POST' })
+    await apiRequest('/auth/logout', { method: 'POST' })
   } finally {
     clearSession()
   }
 }
 
-export const hydrateAuthFromStorage = () => {
-  const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN)
-  const csrfToken = localStorage.getItem(STORAGE_KEYS.CSRF_TOKEN)
-
-  if (!token) {
+// Restaure la session en appelant GET /auth/me.
+export const hydrateAuthFromSession = async () => {
+  try {
+    const user = await apiRequest('/auth/me', { method: 'GET' })
+    saveSession(user)
+  } catch {
     clearSession()
-    return
   }
-
-  saveSession({
-    token,
-    csrfToken,
-    user: getState().auth.user,
-  })
 }
+
+// Alias conserve pour compatibilite avec main.js existant.
+export const hydrateAuthFromStorage = hydrateAuthFromSession
 
 export const isAuthenticated = () => getState().auth.isAuthenticated

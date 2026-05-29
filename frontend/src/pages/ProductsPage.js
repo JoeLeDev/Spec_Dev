@@ -2,23 +2,28 @@ import { getProducts, searchProducts, deleteProduct } from '../services/productS
 import { addToCart } from '../services/cartService.js'
 import { isAuthenticated } from '../services/authService.js'
 import { ROUTES } from '../utils/constants.js'
+import { appendProductImage } from '../utils/productImages.js'
+import { setSafeText } from '../utils/dom.js'
+import { clearElement } from '../utils/dom.js'
 
 // Création de la carte de produit
 const createProductCard = (product, onAdd, onDeleted, showAdminActions) => {
   const card = document.createElement('article')
   card.className = 'rounded-lg border border-slate-700 bg-slate-800 p-4'
 
+  appendProductImage(card, product)
+
   const title = document.createElement('h3')
   title.className = 'text-lg font-semibold'
-  title.textContent = product.label ?? 'Produit'
+  setSafeText(title, product.label ?? 'Produit')
 
   const category = document.createElement('p')
   category.className = 'mt-1 text-xs text-slate-300'
-  category.textContent = `Categorie: ${product.category ?? 'N/A'}`
+  setSafeText(category, `Categorie: ${product.category ?? 'N/A'}`)
 
   const description = document.createElement('p')
   description.className = 'mt-3 text-sm text-slate-200'
-  description.textContent = product.description ?? ''
+  setSafeText(description, product.description ?? '')
 
   const footer = document.createElement('div')
   footer.className = 'mt-4 flex items-center justify-between'
@@ -114,12 +119,12 @@ export const createProductsPage = () => {
   // Fonction pour afficher la liste des produits
   const renderList = (query = '') => {
     const filtered = searchProducts(products, query)
-    grid.innerHTML = ''
+    clearElement(grid)
 
     if (filtered.length === 0) {
       const empty = document.createElement('p')
       empty.className = 'text-sm text-slate-300'
-      empty.textContent = 'Aucun produit trouve.'
+      setSafeText(empty, 'Aucun produit trouve.')
       grid.append(empty)
       return
     }
@@ -129,7 +134,7 @@ export const createProductsPage = () => {
         product,
         (selectedProduct) => {
           addToCart(selectedProduct)
-          feedback.textContent = `${selectedProduct.label} ajoute au panier.`
+          setSafeText(feedback, `${selectedProduct.label} ajoute au panier.`)
         },
         async () => {
           products = await getProducts()
@@ -153,8 +158,8 @@ export const createProductsPage = () => {
     .catch(() => {
       const error = document.createElement('p')
       error.className = 'text-sm text-red-400'
-      error.textContent = 'Impossible de charger les produits.'
-      grid.innerHTML = ''
+      setSafeText(error, 'Impossible de charger les produits.')
+      clearElement(grid)
       grid.append(error)
     })
 

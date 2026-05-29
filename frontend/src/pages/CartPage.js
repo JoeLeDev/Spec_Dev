@@ -4,6 +4,7 @@ import {
   removeFromCart,
   updateCartItemQuantity,
 } from '../services/cartService.js'
+import { clearElement, setSafeText } from '../utils/dom.js'
 
 const computeTotal = (items) =>
   items.reduce(
@@ -31,7 +32,7 @@ export const createCartPage = () => {
 
   const render = () => {
     const items = getCartItems()
-    list.innerHTML = ''
+    clearElement(list)
 
     if (items.length === 0) {
       const empty = document.createElement('p')
@@ -49,7 +50,7 @@ export const createCartPage = () => {
 
       const info = document.createElement('p')
       info.className = 'text-sm'
-      info.textContent = `${item.label} x${item.quantity} - ${Number(item.price).toFixed(2)} EUR`
+      setSafeText(info, `${item.label} x${item.quantity} - ${Number(item.price).toFixed(2)} EUR`)
 
       const quantityControls = document.createElement('div')
       quantityControls.className = 'flex items-center gap-2'
