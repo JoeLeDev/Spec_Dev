@@ -2,6 +2,7 @@ import express from 'express';
 import prisma from '../prisma.js';
 import { uploadProductImage } from '../middleware/uploadProductImage.js';
 import { verifyCsrfToken } from '../middleware/csrf.js';
+import { requireAuth } from '../middleware/requireAuth.js';
 
 const router = express.Router();
 
@@ -135,8 +136,8 @@ const withImageUpload = (handler) => (req, res, next) => {
     });
 };
 
-router.post('/', verifyCsrfToken, withImageUpload(createProduit));
-router.put('/:id', verifyCsrfToken, withImageUpload(updateProduit));
-router.delete('/:id', verifyCsrfToken, deleteProduit);
+router.post('/', requireAuth, verifyCsrfToken, withImageUpload(createProduit));
+router.put('/:id', requireAuth, verifyCsrfToken, withImageUpload(updateProduit));
+router.delete('/:id', requireAuth, verifyCsrfToken, deleteProduit);
 
 export default router;

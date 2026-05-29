@@ -1,9 +1,10 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
 import prisma from '../prisma.js';
-import { validate } from '../validate.js';
+import { validate } from '../middleware/validate.js';
 import { RegisterSchema } from './auth.schema.js';
 import { verifyCsrfToken } from '../middleware/csrf.js';
+import { requireAuth } from '../middleware/requireAuth.js';
 
 const router = express.Router();
 
@@ -58,17 +59,15 @@ const deconnecter = (req, res) => {
     req.session.destroy(() => res.status(204).end());
 };
 
-//GET auth/me
-//pour vérifier l'identité
+//GET auth/me — requireAuth garantit la session
 const moi = (req, res) => {
-    if (!req.session.user) return res.status(401).json({ erreur: 'non connecté' });
     res.json(req.session.user);
 };
 
 // -- routes --------
 router.post('/register', validate(RegisterSchema), inscrire);
 router.post('/login', connecter);
-router.post('/logout', verifyCsrfToken, deconnecter);
-router.get('/me', moi);
+router.post('/logout', requireAuth, verifyCsrfToken, deconnecter);
+router.get('/me', requireAuth, moi);
 
 export default router;
