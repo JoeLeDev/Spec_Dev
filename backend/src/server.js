@@ -2,6 +2,7 @@ import express from 'express';
 import 'dotenv/config';
 import cors from 'cors';
 import session from 'express-session';
+import { csrfToken } from './middleware/csrf.js';
 import authRouter from './auth/auth.js';
 import productsRouter from './products/products.js';
 import statsRouter from './stats/stats.js';
@@ -34,6 +35,9 @@ app.use(session({
     },
 }));
 
+//middleware csrf : pose le token en session
+app.use(csrfToken);
+
 app.get('/', (req, res) => {
   res.send('Coucou');
 })
@@ -44,6 +48,8 @@ app.use('/stats', corsOuvert, statsRouter);
 // cors restreint
 app.use('/auth', corsFront, authRouter);
 app.use('/products', corsFront, productsRouter);
+//mini route pour exposer le token au front
+app.get('/csrf-token', corsFront, (req, res) => res.json({ csrfToken: req.session.csrfToken }));
 
 //middleware d'erreur global (celui d'Express)
 app.use((err, req, res, next) => {
