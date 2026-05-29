@@ -6,14 +6,14 @@ import { navigateTo } from '../app/router.js'
 import { appendProductGallery } from '../utils/productImages.js'
 import { clearElement, setSafeText } from '../utils/dom.js'
 
-// Cree la page de detail produit.
+// Crée la page de détail produit.
 export const createProductDetailPage = ({ params }) => {
   const page = document.createElement('section')
   page.className = 'space-y-4'
 
   const title = document.createElement('h1')
   title.className = 'text-3xl font-bold'
-  setSafeText(title, 'Detail produit')
+  setSafeText(title, 'Détail produit')
 
   const content = document.createElement('div')
   content.className = 'rounded-lg border border-slate-700 bg-slate-800 p-4'
@@ -42,7 +42,7 @@ export const createProductDetailPage = ({ params }) => {
 
       const category = document.createElement('p')
       category.className = 'text-sm text-slate-300'
-      setSafeText(category, `Categorie: ${product.category ?? 'N/A'}`)
+      setSafeText(category, `Catégorie : ${product.category ?? 'N/A'}`)
 
       const description = document.createElement('p')
       description.className = 'mt-3 text-slate-200'
@@ -58,7 +58,7 @@ export const createProductDetailPage = ({ params }) => {
       button.textContent = 'Ajouter au panier'
       button.addEventListener('click', () => {
         addToCart(product)
-        setSafeText(feedback, `${product.label} ajoute au panier.`)
+        setSafeText(feedback, `${product.label} ajouté au panier.`)
       })
 
       content.append(label, category, description, price, button)

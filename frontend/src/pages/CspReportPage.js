@@ -1,7 +1,7 @@
 import { getCspReports } from '../services/cspService.js'
 import { clearElement, setSafeText } from '../utils/dom.js'
 
-// Cree une ligne de tableau pour un rapport CSP.
+// Crée une ligne de tableau pour un rapport CSP.
 const createReportRow = (report) => {
   const row = document.createElement('tr')
   row.className = 'border-t border-slate-700'
@@ -35,7 +35,7 @@ export const createCspReportPage = () => {
   const info = document.createElement('p')
   info.className = 'text-sm text-slate-300'
   info.textContent =
-    'Dernieres violations CSP depuis l API backend (/csp-reports). Si vide, le endpoint backend n est pas encore disponible.'
+    "Dernières violations CSP enregistrées par le backend (GET /csp-reports). La liste peut être vide tant qu'aucune violation n'a été signalée."
 
   const loading = document.createElement('p')
   loading.className = 'text-sm text-slate-300'
@@ -57,7 +57,7 @@ export const createCspReportPage = () => {
     <tr>
       <th class="px-4 py-2 text-left text-sm">Date</th>
       <th class="px-4 py-2 text-left text-sm">Directive</th>
-      <th class="px-4 py-2 text-left text-sm">URI bloquee</th>
+      <th class="px-4 py-2 text-left text-sm">URI bloquée</th>
       <th class="px-4 py-2 text-left text-sm">Page</th>
     </tr>
   `

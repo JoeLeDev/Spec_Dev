@@ -3,7 +3,7 @@ import { navigateTo } from '../../app/router.js'
 import { ROUTES } from '../../utils/constants.js'
 import { getCartCount } from '../../services/cartService.js'
 
-// Cree un lien de navigation interne.
+// Crée un lien de navigation interne.
 const createNavLink = (href, label) => {
   const link = document.createElement('a')
   link.setAttribute('data-link', 'true')
@@ -13,7 +13,7 @@ const createNavLink = (href, label) => {
   return link
 }
 
-// Cree le lien panier avec compteur dynamique.
+// Crée le lien panier avec compteur dynamique.
 const createCartLink = () => {
   const link = document.createElement('a')
   link.setAttribute('data-link', 'true')
@@ -34,19 +34,19 @@ export const createNavbar = () => {
   const navbar = document.createElement('nav')
   navbar.className = 'mb-6 flex flex-wrap items-center gap-4 text-sm'
 
-  navbar.append(createNavLink(ROUTES.PRODUCTS, 'Produits'), createCartLink(), createNavLink(ROUTES.STATS_CATEGORIES, 'Stats'))
-
   if (isAuthenticated()) {
     navbar.append(
       createNavLink(ROUTES.DASHBOARD, 'Dashboard'),
       createNavLink(ROUTES.CSP_REPORT, 'CSP')
     )
 
+  navbar.append(createNavLink(ROUTES.PRODUCTS, 'Produits'), createCartLink(), createNavLink(ROUTES.STATS_CATEGORIES, 'Stats'))
+
     const logoutButton = document.createElement('button')
     logoutButton.id = 'logout-btn'
     logoutButton.type = 'button'
     logoutButton.className = 'text-red-300 hover:underline'
-    logoutButton.textContent = 'Deconnexion'
+    logoutButton.textContent = 'Déconnexion'
     navbar.append(logoutButton)
   } else {
     navbar.append(createNavLink(ROUTES.LOGIN, 'Connexion'), createNavLink(ROUTES.REGISTER, 'Inscription'))
@@ -64,7 +64,7 @@ export const bindNavbarActions = (navbar) => {
     try {
       await logout()
     } catch {
-      // Deconnexion locale non bloquante si l API echoue.
+      // Déconnexion locale non bloquante si l'API échoue.
     }
     navigateTo(ROUTES.LOGIN)
   })

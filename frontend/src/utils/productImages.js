@@ -1,18 +1,20 @@
 import { API_BASE_URL } from './constants.js'
 import { setSafeText } from './dom.js'
 
-// Valide et normalise une URL d image renvoyee par l API.
+// Valide et normalise une URL d'image renvoyée par l'API.
 export const resolveImageUrl = (rawUrl) => {
   if (!rawUrl || typeof rawUrl !== 'string') return null
 
   const url = rawUrl.trim()
+  if (url.startsWith('data:image/')) return url
   if (url.startsWith('http://') || url.startsWith('https://')) return url
   if (url.startsWith('/')) return `${API_BASE_URL}${url}`
+  if (url.startsWith('uploads/')) return `${API_BASE_URL}/${url}`
 
   return null
 }
 
-// Retourne l URL de la premiere image d un produit.
+// Retourne l'URL de la première image d'un produit.
 export const getPrimaryImageUrl = (product) => {
   const images = product?.images ?? []
   if (!images.length) return null
@@ -22,7 +24,7 @@ export const getPrimaryImageUrl = (product) => {
   return resolveImageUrl(candidate)
 }
 
-// Cree un placeholder visuel si l image est absente ou invalide.
+// Crée un placeholder visuel si l'image est absente ou invalide.
 export const createImagePlaceholder = () => {
   const placeholder = document.createElement('div')
   placeholder.className =
@@ -31,7 +33,7 @@ export const createImagePlaceholder = () => {
   return placeholder
 }
 
-// Ajoute une image produit securisee (src validee, alt texte).
+// Ajoute une image produit sécurisée (src validée, alt texte).
 export const appendProductImage = (
   container,
   product,
@@ -56,7 +58,7 @@ export const appendProductImage = (
   return img
 }
 
-// Cree une galerie d images pour la page detail.
+// Crée une galerie d'images pour la page détail.
 export const appendProductGallery = (container, product) => {
   const images = product?.images ?? []
   if (!images.length) {

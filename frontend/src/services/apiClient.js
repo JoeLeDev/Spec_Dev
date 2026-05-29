@@ -1,17 +1,17 @@
-import { API_BASE_URL } from '../utils/constants.js'
+import { API_BASE_URL, STORAGE_KEYS } from '../utils/constants.js'
 
-// Construit les en-tetes HTTP communs (session cookie + CSRF optionnel).
-const buildHeaders = (customHeaders = {}) => {
-  const csrfToken = localStorage.getItem('csrf_token')
+// Construit les en-têtes HTTP communs (session cookie + CSRF optionnel).
+const buildHeaders = (customHeaders = {}, { json = true } = {}) => {
+  const csrfToken = localStorage.getItem(STORAGE_KEYS.CSRF_TOKEN)
 
   return {
-    'Content-Type': 'application/json',
+    ...(json ? { 'Content-Type': 'application/json' } : {}),
     ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
     ...customHeaders,
   }
 }
 
-// Extrait un message d erreur lisible depuis la reponse API.
+// Extrait un message d'erreur lisible depuis la réponse API.
 const extractErrorMessage = (data, status) => {
   if (!data || typeof data !== 'object') return `Erreur HTTP ${status}`
 
@@ -22,7 +22,7 @@ const extractErrorMessage = (data, status) => {
   return data.erreur || data.message || `Erreur HTTP ${status}`
 }
 
-// Parse la reponse HTTP et leve une erreur si necessaire.
+// Parse la réponse HTTP et lève une erreur si nécessaire.
 const parseResponse = async (response) => {
   if (response.status === 204) return null
 
@@ -43,29 +43,30 @@ const parseResponse = async (response) => {
 // Traduit les erreurs techniques en messages utilisateur.
 const toUserFriendlyError = (error) => {
   if (error?.name === 'AbortError') {
-    return 'La requete a pris trop de temps. Reessaie.'
+    return 'La requête a pris trop de temps. Réessaie.'
   }
 
   if (
     error instanceof TypeError &&
     String(error.message).toLowerCase().includes('failed to fetch')
   ) {
-    return 'Impossible de joindre le serveur API. Verifie que le backend tourne sur localhost:3000 et que le front est sur localhost:5173.'
+    return 'Impossible de joindre le serveur API. Vérifie que le backend tourne sur localhost:3000 et que le front est sur localhost:5173.'
   }
 
-  return error?.message || 'Erreur reseau.'
+  return error?.message || 'Erreur réseau.'
 }
 
-// Execute une requete API avec cookies de session (credentials).
+// Exécute une requête API avec cookies de session (credentials).
 export const apiRequest = async (path, options = {}) => {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 10000)
 
   try {
+    const isFormData = options.body instanceof FormData
     const response = await fetch(`${API_BASE_URL}${path}`, {
       ...options,
       credentials: 'include',
-      headers: buildHeaders(options.headers),
+      headers: buildHeaders(options.headers, { json: !isFormData }),
       signal: controller.signal,
     })
 

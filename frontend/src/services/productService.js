@@ -4,7 +4,7 @@ import { MOCK_STORAGE_KEYS } from '../utils/constants.js'
 const MOCK_PRODUCTS = [
   {
     id: '1',
-    label: 'Clavier mecanique',
+    label: 'Clavier mécanique',
     description: 'Clavier compact switchs rouges.',
     price: 89.9,
     category: 'Informatique',
@@ -21,7 +21,7 @@ const MOCK_PRODUCTS = [
   {
     id: '3',
     label: 'Tapis de yoga',
-    description: 'Surface antiderapante 6mm.',
+    description: 'Surface antidérapante 6mm.',
     price: 24.99,
     category: 'Sport',
     images: [],
@@ -34,17 +34,17 @@ const MOCK_CATEGORY_STATS = [
   { nom: 'Sport', compte: 1 },
 ]
 
-// Indique si l erreur provient d un probleme reseau (backend injoignable).
+// Indique si l'erreur provient d'un problème réseau (backend injoignable).
 const isNetworkError = (error) => {
   const message = String(error?.message ?? '').toLowerCase()
   return (
     error instanceof TypeError ||
     message.includes('joindre le serveur') ||
-    message.includes('erreur reseau')
+    message.includes('erreur réseau')
   )
 }
 
-// Convertit un produit API (libelle/prix/categorie) vers le modele front.
+// Convertit un produit API (libellé/prix/catégorie) vers le modèle front.
 export const mapProductFromApi = (product) => ({
   id: product.id,
   label: product.libelle ?? product.label ?? 'Produit',
@@ -61,6 +61,30 @@ export const mapProductToApi = (payload) => ({
   prix: Number(payload.price),
   categorie: payload.category,
 })
+
+// Lit un fichier image en data URL (fallback mock hors ligne).
+const readImageFileAsDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result ?? ''))
+    reader.onerror = () => reject(new Error('Impossible de lire le fichier image.'))
+    reader.readAsDataURL(file)
+  })
+
+// Construit un FormData pour creer ou modifier un produit avec image.
+const buildProductFormData = (payload) => {
+  const formData = new FormData()
+  formData.append('libelle', payload.label)
+  formData.append('description', payload.description)
+  formData.append('prix', String(payload.price))
+  formData.append('categorie', payload.category)
+
+  if (payload.imageFile) {
+    formData.append('image', payload.imageFile)
+  }
+
+  return formData
+}
 
 // Lit la liste locale des produits mockes.
 const readMockProducts = () => {
@@ -80,10 +104,10 @@ const writeMockProducts = (products) => {
   localStorage.setItem(MOCK_STORAGE_KEYS.PRODUCTS, JSON.stringify(products))
 }
 
-// Retourne la source produits utilisee en fallback (mock local ou seed).
+// Retourne la source produits utilisée en fallback (mock local ou seed).
 const getLocalProducts = () => readMockProducts() ?? structuredClone(MOCK_PRODUCTS)
 
-// Pour recuperer tous les produits
+// Pour récupérer tous les produits
 export const getProducts = async () => {
   try {
     const data = await apiRequest('/products', { method: 'GET' })
@@ -95,7 +119,7 @@ export const getProducts = async () => {
   }
 }
 
-// Pour rechercher des produits par label, description ou categorie
+// Pour rechercher des produits par label, description ou catégorie
 export const searchProducts = (products, query) => {
   const value = query.trim().toLowerCase()
   if (!value) return products
@@ -112,7 +136,7 @@ export const searchProducts = (products, query) => {
   })
 }
 
-// Pour recuperer un produit par son id
+// Pour récupérer un produit par son id
 export const getProductById = async (productId) => {
   if (!productId || productId === 'new') return null
 
@@ -127,50 +151,60 @@ export const getProductById = async (productId) => {
   return products.find((product) => String(product.id) === String(productId)) ?? null
 }
 
-// Pour creer un produit via l API (fallback mock uniquement si reseau down)
+// Pour créer un produit via l'API (fallback mock uniquement si réseau down)
 export const createProduct = async (payload) => {
-  const apiPayload = mapProductToApi(payload)
+  const hasImage = Boolean(payload.imageFile)
 
   try {
     const data = await apiRequest('/products', {
       method: 'POST',
-      body: JSON.stringify(apiPayload),
+      body: hasImage ? buildProductFormData(payload) : JSON.stringify(mapProductToApi(payload)),
     })
     if (data && typeof data === 'object') return mapProductFromApi(data)
-    throw new Error('Reponse API invalide lors de la creation.')
+    throw new Error('Réponse API invalide lors de la création.')
   } catch (error) {
     if (!isNetworkError(error)) throw error
   }
 
   const products = await getProducts()
+  const images = payload.imageFile
+    ? [{ url: await readImageFileAsDataUrl(payload.imageFile) }]
+    : []
+
   const created = {
     id: String(Date.now()),
     label: payload.label,
     description: payload.description,
     price: Number(payload.price),
     category: payload.category,
-    images: [],
+    images,
   }
   writeMockProducts([...products, created])
   return created
 }
 
-// Pour mettre a jour un produit via l API
+// Pour mettre à jour un produit via l'API
 export const updateProduct = async (productId, payload) => {
-  const apiPayload = mapProductToApi(payload)
+  const hasImage = Boolean(payload.imageFile)
 
   try {
     const data = await apiRequest(`/products/${productId}`, {
       method: 'PUT',
-      body: JSON.stringify(apiPayload),
+      body: hasImage ? buildProductFormData(payload) : JSON.stringify(mapProductToApi(payload)),
     })
     if (data && typeof data === 'object') return mapProductFromApi(data)
-    throw new Error('Reponse API invalide lors de la mise a jour.')
+    throw new Error('Réponse API invalide lors de la mise à jour.')
   } catch (error) {
     if (!isNetworkError(error)) throw error
   }
 
   const products = await getProducts()
+  let nextImages = null
+
+  if (payload.imageFile) {
+    nextImages = [{ url: await readImageFileAsDataUrl(payload.imageFile) }]
+  }
+
   const updated = products.map((product) =>
     String(product.id) === String(productId)
       ? {
@@ -179,6 +213,7 @@ export const updateProduct = async (productId, payload) => {
           description: payload.description,
           price: Number(payload.price),
           category: payload.category,
+          ...(nextImages ? { images: nextImages } : {}),
         }
       : product
   )
@@ -186,7 +221,7 @@ export const updateProduct = async (productId, payload) => {
   return updated.find((product) => String(product.id) === String(productId)) ?? null
 }
 
-// Pour supprimer un produit via l API
+// Pour supprimer un produit via l'API
 export const deleteProduct = async (productId) => {
   try {
     await apiRequest(`/products/${productId}`, { method: 'DELETE' })
@@ -201,7 +236,7 @@ export const deleteProduct = async (productId) => {
   return true
 }
 
-// Pour recuperer les statistiques de categories
+// Pour récupérer les statistiques de catégories
 export const getCategoryStats = async () => {
   try {
     const data = await apiRequest('/stats', { method: 'GET' })

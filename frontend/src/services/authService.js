@@ -1,7 +1,8 @@
 import { apiRequest } from './apiClient.js'
+import { fetchCsrfToken, setStoredCsrfToken } from './csrfService.js'
 import { getState, setState } from '../app/store.js'
 
-// Met a jour le store avec l utilisateur connecte.
+// Met à jour le store avec l'utilisateur connecté.
 const saveSession = (user) => {
   setState((prevState) => ({
     ...prevState,
@@ -13,8 +14,10 @@ const saveSession = (user) => {
   }))
 }
 
-// Reinitialise l etat auth local.
+// Réinitialise l'état auth local.
 const clearSession = () => {
+  setStoredCsrfToken(null)
+
   setState((prevState) => ({
     ...prevState,
     auth: {
@@ -41,10 +44,11 @@ export const login = async ({ email, password }) => {
   })
 
   saveSession(user)
+  await fetchCsrfToken()
   return user
 }
 
-// Deconnexion via POST /auth/logout.
+// Déconnexion via POST /auth/logout.
 export const logout = async () => {
   try {
     await apiRequest('/auth/logout', { method: 'POST' })
@@ -58,12 +62,13 @@ export const hydrateAuthFromSession = async () => {
   try {
     const user = await apiRequest('/auth/me', { method: 'GET' })
     saveSession(user)
+    await fetchCsrfToken()
   } catch {
     clearSession()
   }
 }
 
-// Alias conserve pour compatibilite avec main.js existant.
+// Alias conservé pour compatibilité avec main.js existant.
 export const hydrateAuthFromStorage = hydrateAuthFromSession
 
 export const isAuthenticated = () => getState().auth.isAuthenticated

@@ -1,6 +1,7 @@
-import { STORAGE_KEYS } from '../utils/constants.js'
 import { navigateTo } from '../app/router.js'
 import { ROUTES } from '../utils/constants.js'
+import { fetchCsrfToken, getStoredCsrfToken } from '../services/csrfService.js'
+import { getPrimaryImageUrl } from '../utils/productImages.js'
 import {
   createProduct,
   getProductById,
@@ -8,7 +9,7 @@ import {
 } from '../services/productService.js'
 import { validateImageFile, validateProductForm } from '../utils/validators.js'
 
-// Construit le formulaire CRUD produit (creation ou edition).
+// Construit le formulaire CRUD produit (création ou édition).
 export const createProductFormPage = ({ params }) => {
   const productId = params?.id
   const isEditMode = Boolean(productId)
@@ -26,7 +27,7 @@ export const createProductFormPage = ({ params }) => {
 
   form.innerHTML = `
     <div>
-      <label for="label" class="mb-1 block text-sm">Libelle</label>
+      <label for="label" class="mb-1 block text-sm">Libellé</label>
       <input id="label" name="label" class="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2" required />
     </div>
     <div>
@@ -38,31 +39,39 @@ export const createProductFormPage = ({ params }) => {
       <input id="price" name="price" type="number" min="0" step="0.01" class="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2" required />
     </div>
     <div>
-      <label for="category" class="mb-1 block text-sm">Categorie</label>
+      <label for="category" class="mb-1 block text-sm">Catégorie</label>
       <input id="category" name="category" class="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2" required />
     </div>
     <div>
       <label for="image" class="mb-1 block text-sm">Image</label>
       <input id="image" name="image" type="file" accept="image/jpeg,image/png,image/webp,image/gif" class="w-full text-sm" />
-      <img id="image-preview" alt="Apercu image" class="mt-2 hidden max-h-40 rounded border border-slate-600" />
+      <img id="image-preview" alt="Aperçu image" class="mt-2 hidden max-h-40 rounded border border-slate-600" />
     </div>
     <p id="form-error" class="text-sm text-red-400" role="alert"></p>
     <button type="submit" class="w-full rounded bg-indigo-500 px-4 py-2 font-semibold hover:bg-indigo-400">
-      ${isEditMode ? 'Enregistrer' : 'Creer le produit'}
+      ${isEditMode ? 'Enregistrer' : 'Créer le produit'}
     </button>
   `
 
   const csrfInput = document.createElement('input')
   csrfInput.type = 'hidden'
   csrfInput.name = '_csrf'
-  csrfInput.value = localStorage.getItem(STORAGE_KEYS.CSRF_TOKEN) ?? ''
+  csrfInput.value = getStoredCsrfToken()
   form.prepend(csrfInput)
 
   const errorBox = form.querySelector('#form-error')
+
+  fetchCsrfToken()
+    .then((token) => {
+      csrfInput.value = token
+    })
+    .catch(() => {
+      errorBox.textContent = "Impossible de récupérer le token CSRF. Réconnecte-toi."
+    })
   const imageInput = form.querySelector('#image')
   const imagePreview = form.querySelector('#image-preview')
 
-  // Affiche un apercu local de l image selectionnee.
+  // Affiche un aperçu local de l'image sélectionnée.
   imageInput.addEventListener('change', () => {
     const file = imageInput.files?.[0]
     const imageError = validateImageFile(file)
@@ -94,6 +103,12 @@ export const createProductFormPage = ({ params }) => {
       form.description.value = product.description ?? ''
       form.price.value = String(product.price ?? '')
       form.category.value = product.category ?? ''
+
+      const existingImageUrl = getPrimaryImageUrl(product)
+      if (existingImageUrl) {
+        imagePreview.src = existingImageUrl
+        imagePreview.classList.remove('hidden')
+      }
     })
   }
 
@@ -124,7 +139,7 @@ export const createProductFormPage = ({ params }) => {
     }
 
     if (imageFile) {
-      payload.imageName = imageFile.name
+      payload.imageFile = imageFile
     }
 
     try {
@@ -135,7 +150,7 @@ export const createProductFormPage = ({ params }) => {
       }
       navigateTo(ROUTES.PRODUCTS)
     } catch (error) {
-      errorBox.textContent = error.message || 'Impossible d enregistrer le produit.'
+      errorBox.textContent = error.message || "Impossible d'enregistrer le produit."
     }
   })
 

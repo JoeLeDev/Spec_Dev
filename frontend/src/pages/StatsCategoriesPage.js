@@ -1,20 +1,20 @@
 import { getCategoryStats } from '../services/productService.js'
 import { clearElement, setSafeText } from '../utils/dom.js'
 
-// Création de l'entête du tableau de statistiques categories.
+// Création de l'en-tête du tableau de statistiques catégories.
 const createStatsTableHead = () => {
   const thead = document.createElement('thead')
   thead.className = 'bg-slate-700'
   thead.innerHTML = `
     <tr>
-      <th class="px-4 py-2 text-left text-sm">Categorie</th>
+      <th class="px-4 py-2 text-left text-sm">Catégorie</th>
       <th class="px-4 py-2 text-left text-sm">Nombre de produits</th>
     </tr>
   `
   return thead
 }
 
-// Cree une ligne de tableau a partir d une statistique.
+// Crée une ligne de tableau à partir d'une statistique.
 const createStatsRow = (item) => {
   const row = document.createElement('tr')
   row.className = 'border-t border-slate-700'
@@ -31,14 +31,14 @@ const createStatsRow = (item) => {
   return row
 }
 
-// Construit la page publique de stats categories avec etats chargement/erreur.
+// Construit la page publique de stats catégories avec états chargement/erreur.
 export const createStatsCategoriesPage = () => {
   const page = document.createElement('section')
   page.className = 'space-y-4'
 
   const heading = document.createElement('h1')
   heading.className = 'text-3xl font-bold'
-  heading.textContent = 'Stats categories'
+  heading.textContent = 'Stats catégories'
 
   const loading = document.createElement('p')
   loading.className = 'text-sm text-slate-300'

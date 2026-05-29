@@ -19,7 +19,7 @@ const createProductCard = (product, onAdd, onDeleted, showAdminActions) => {
 
   const category = document.createElement('p')
   category.className = 'mt-1 text-xs text-slate-300'
-  setSafeText(category, `Categorie: ${product.category ?? 'N/A'}`)
+  setSafeText(category, `Catégorie : ${product.category ?? 'N/A'}`)
 
   const description = document.createElement('p')
   description.className = 'mt-3 text-sm text-slate-200'
@@ -42,7 +42,7 @@ const createProductCard = (product, onAdd, onDeleted, showAdminActions) => {
   detailLink.setAttribute('data-link', 'true')
   detailLink.href = `/products/${product.id}`
   detailLink.className = 'text-sm text-indigo-300 hover:underline'
-  detailLink.textContent = 'Voir detail'
+  detailLink.textContent = 'Voir détail'
 
   const actions = document.createElement('div')
   actions.className = 'flex flex-wrap items-center gap-3'
@@ -124,7 +124,7 @@ export const createProductsPage = () => {
     if (filtered.length === 0) {
       const empty = document.createElement('p')
       empty.className = 'text-sm text-slate-300'
-      setSafeText(empty, 'Aucun produit trouve.')
+      setSafeText(empty, 'Aucun produit trouvé.')
       grid.append(empty)
       return
     }
@@ -134,7 +134,7 @@ export const createProductsPage = () => {
         product,
         (selectedProduct) => {
           addToCart(selectedProduct)
-          setSafeText(feedback, `${selectedProduct.label} ajoute au panier.`)
+          setSafeText(feedback, `${selectedProduct.label} ajouté au panier.`)
         },
         async () => {
           products = await getProducts()

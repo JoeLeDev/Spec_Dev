@@ -16,7 +16,7 @@ import { redirectIfAuthenticated, requireAuth } from './app/guards.js'
 import { createNavbar, bindNavbarActions } from './components/layout/Navbar.js'
 import { setSafeText } from './utils/dom.js'
 
-// Cree le shell principal avec navbar commune.
+// Crée le shell principal avec navbar commune.
 const createPage = (title = '') => {
   const el = document.createElement('main')
   el.className = 'min-h-screen bg-slate-900 p-8 text-white'
@@ -42,7 +42,7 @@ const updateCartBadges = () => {
   })
 }
 
-// Cree une page avec layout (navbar + contenu).
+// Crée une page avec layout (navbar + contenu).
 const withLayout = (contentFactory) => (routeContext = {}) => {
   const shell = createPage('')
   const title = shell.querySelector('h1')

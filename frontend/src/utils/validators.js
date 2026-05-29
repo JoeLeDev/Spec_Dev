@@ -8,7 +8,7 @@ export const validateEmail = (email) => {
 
 export const validatePassword = (password) => {
   if (!password) return "Le mot de passe est obligatoire."
-  if (password.length < 8) return "Le mot de passe doit faire au moins 8 caracteres."
+  if (password.length < 8) return 'Le mot de passe doit faire au moins 8 caractères.'
   return ""
 }
 
@@ -22,11 +22,11 @@ export const validateAuthForm = ({ email, password }) => {
 
 // Valide les champs obligatoires d'un produit.
 export const validateProductForm = ({ label, description, price, category }) => {
-  if (!label?.trim()) return 'Le libelle est obligatoire.'
+  if (!label?.trim()) return 'Le libellé est obligatoire.'
   if (!description?.trim()) return 'La description est obligatoire.'
-  if (!category?.trim()) return 'La categorie est obligatoire.'
+  if (!category?.trim()) return 'La catégorie est obligatoire.'
   if (Number.isNaN(Number(price)) || Number(price) < 0) {
-    return 'Le prix doit etre un nombre positif.'
+    return 'Le prix doit être un nombre positif.'
   }
   return ''
 }
@@ -37,7 +37,7 @@ export const validateImageFile = (file) => {
 
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
   if (!allowedTypes.includes(file.type)) {
-    return 'Format image non autorise (jpeg, png, webp, gif).'
+    return 'Format image non autorisé (jpeg, png, webp, gif).'
   }
 
   const maxSize = 2 * 1024 * 1024
