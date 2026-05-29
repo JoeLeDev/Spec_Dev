@@ -11,29 +11,10 @@ import { createDashboardPage } from './pages/DashboardPage.js'
 import { createStatsCategoriesPage } from './pages/StatsCategoriesPage.js'
 import { createProductFormPage } from './pages/ProductFormPage.js'
 import { createCspReportPage } from './pages/CspReportPage.js'
+import { createNotFoundPage } from './pages/NotFoundPage.js'
 import { getCartCount } from './services/cartService.js'
 import { redirectIfAuthenticated, requireAuth } from './app/guards.js'
-import { createNavbar, bindNavbarActions } from './components/layout/Navbar.js'
-import { setSafeText } from './utils/dom.js'
-
-// Crée le shell principal avec navbar commune.
-const createPage = (title = '') => {
-  const el = document.createElement('main')
-  el.className = 'min-h-screen bg-slate-900 p-8 text-white'
-
-  const navbar = createNavbar()
-  bindNavbarActions(navbar)
-  el.append(navbar)
-
-  if (title) {
-    const heading = document.createElement('h1')
-    heading.className = 'text-3xl font-bold'
-    setSafeText(heading, title)
-    el.append(heading)
-  }
-
-  return el
-}
+import { createAppShell } from './components/layout/appShell.js'
 
 const updateCartBadges = () => {
   const count = getCartCount()
@@ -42,14 +23,9 @@ const updateCartBadges = () => {
   })
 }
 
-// Crée une page avec layout (navbar + contenu).
-const withLayout = (contentFactory) => (routeContext = {}) => {
-  const shell = createPage('')
-  const title = shell.querySelector('h1')
-  if (title) title.remove()
-  shell.append(contentFactory(routeContext))
-  return shell
-}
+// Enveloppe une page avec navbar + footer.
+const withLayout = (contentFactory) => (routeContext = {}) =>
+  createAppShell(() => contentFactory(routeContext), { pathname: routeContext.pathname })
 
 registerRoute(ROUTES.LOGIN, redirectIfAuthenticated(createLoginPage))
 registerRoute(ROUTES.REGISTER, redirectIfAuthenticated(createRegisterPage))
@@ -61,7 +37,7 @@ registerRoute(ROUTES.CART, withLayout(createCartPage))
 registerRoute(ROUTES.STATS_CATEGORIES, withLayout(createStatsCategoriesPage))
 registerRoute(ROUTES.DASHBOARD, requireAuth(withLayout(createDashboardPage)))
 registerRoute(ROUTES.CSP_REPORT, requireAuth(withLayout(createCspReportPage)))
-registerRoute('/404', () => createPage('404'))
+registerRoute('/404', withLayout(createNotFoundPage))
 
 window.addEventListener('cart:updated', updateCartBadges)
 

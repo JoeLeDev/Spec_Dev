@@ -32,10 +32,18 @@ const matchRoute = (pathname) => {
     return { render: route.render, params }
   }
 
-  // Gestion de la page non trouvée
+  return null
+}
+
+const renderNotFound = (app, pathname) => {
   const notFound = routes.find((route) => route.path === '/404')
-  if (!notFound) return null
-  return { render: notFound.render, params: {} }
+  if (!notFound) {
+    app.textContent = 'Page non trouvée'
+    return
+  }
+
+  app.innerHTML = ''
+  app.append(notFound.render({ params: {}, pathname }))
 }
 
 // Pour naviguer vers une route
@@ -54,7 +62,7 @@ export const renderCurrentRoute = () => {
   const routeMatch = matchRoute(pathname)
 
   if (!routeMatch) {
-    app.textContent = 'Page non trouvée'
+    renderNotFound(app, pathname)
     return
   }
 

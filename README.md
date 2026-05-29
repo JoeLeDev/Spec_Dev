@@ -60,6 +60,11 @@ export const API_BASE_URL = 'http://localhost:3000'
 - CRUD produit (UI + API)
 - Page rapports CSP (connectée)
 - Dashboard résumé (utilisateur, nb produits, nb rapports CSP)
+- Footer commun (copyright, `security.txt`)
+- Shell unique (`appShell`) : navbar + footer sur toutes les pages dont login/register
+- Navbar : lien actif (`aria-current`) selon la route
+- Page 404 dédiée pour les URLs inconnues
+- Mise en page responsive (navbar, tableaux stats/CSP)
 - Fichier `/.well-known/security.txt`
 
 ## Bonus implémentés
@@ -68,7 +73,7 @@ export const API_BASE_URL = 'http://localhost:3000'
 
 - **Frontend (Vite)** : en-têtes `Content-Security-Policy-Report-Only` et `Reporting-Endpoints` sur le dev server (`frontend/vite.config.js`, config partagée dans `frontend/src/config/csp.js`).
 - **Backend** : en-tête `Content-Security-Policy` sur les réponses API (`backend/src/middleware/cspHeaders.js`).
-- Les violations sont envoyées vers `POST http://localhost:3000/csp-reports` puis visibles sur la page **CSP** (`GET /csp-reports`, session requise).
+- Les violations sont envoyées vers `POST http://localhost:3000/csp-reports` puis stockées en base (`CspReport`, max 100 entrées) et visibles sur la page **CSP** (`GET /csp-reports`, session requise).
 
 En dev, Vite génère naturellement des rapports (scripts inline / HMR) : le compteur CSP du dashboard augmente après navigation.
 
@@ -120,7 +125,7 @@ frontend/src/
   config/       # politique CSP (report-uri)
   pages/        # écrans
   services/     # appels API
-  components/   # UI réutilisable (Navbar)
+  components/   # UI réutilisable (Navbar, Footer)
   utils/        # validators, sanitizer, dom, images
 ```
 
@@ -128,7 +133,7 @@ frontend/src/
 
 - Affichage des données API via `textContent` / `setSafeText`
 - Validation formulaires (`validators.js`)
-- CSRF : token session + en-tête `X-CSRF-Token`
-- CSP : Report-Only (front) + politique API (back) + collecte `/csp-reports`
+- CSRF : token session + en-tête `X-CSRF-Token` (produits POST/PUT/DELETE + `POST /auth/logout`)
+- CSP : Report-Only (front) + politique API (back) + collecte `/csp-reports` (persistance SQLite via Prisma)
 - `security.txt` exposé en statique
 - Upload images filtré (type, taille) + stockage `/uploads`

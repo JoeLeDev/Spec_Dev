@@ -32,3 +32,11 @@ model Image {
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId String
 }
+
+model CspReport {
+  id          String   @id @default(uuid())
+  directive   String
+  blockedUri  String
+  documentUri String
+  createdAt   DateTime @default(now())
+}

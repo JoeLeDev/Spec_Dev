@@ -2,37 +2,37 @@ import { login } from '../services/authService.js'
 import { ROUTES } from '../utils/constants.js'
 import { navigateTo } from '../app/router.js'
 import { validateAuthForm } from '../utils/validators.js'
+import { createAppShell } from '../components/layout/appShell.js'
 
-export const createLoginPage = () => {
-  const page = document.createElement('main')
-  page.className = 'min-h-screen bg-slate-900 text-white p-6'
+// Formulaire de connexion (contenu seul).
+const createLoginForm = () => {
+  const section = document.createElement('section')
+  section.className = 'mx-auto w-full max-w-md rounded-lg bg-slate-800 p-4 shadow sm:p-6'
 
-  page.innerHTML = `
-    <section class="mx-auto mt-10 max-w-md rounded-lg bg-slate-800 p-6 shadow">
-      <h1 class="mb-6 text-2xl font-bold">Connexion</h1>
-      <form id="login-form" class="space-y-4" novalidate>
-        <div>
-          <label for="email" class="mb-1 block text-sm">Email</label>
-          <input id="email" name="email" type="email" class="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2" required />
-        </div>
-        <div>
-          <label for="password" class="mb-1 block text-sm">Mot de passe</label>
-          <input id="password" name="password" type="password" class="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2" required />
-        </div>
-        <p id="login-error" class="text-sm text-red-400" role="alert"></p>
-        <button type="submit" class="w-full rounded bg-indigo-500 px-4 py-2 font-semibold hover:bg-indigo-400">
-          Se connecter
-        </button>
-      </form>
-      <p class="mt-4 text-sm text-slate-300">
-        Pas de compte ?
-        <a data-link href="${ROUTES.REGISTER}" class="text-indigo-300 hover:underline">Inscription</a>
-      </p>
-    </section>
+  section.innerHTML = `
+    <h1 class="mb-6 text-2xl font-bold">Connexion</h1>
+    <form id="login-form" class="space-y-4" novalidate>
+      <div>
+        <label for="email" class="mb-1 block text-sm">Email</label>
+        <input id="email" name="email" type="email" class="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2" required />
+      </div>
+      <div>
+        <label for="password" class="mb-1 block text-sm">Mot de passe</label>
+        <input id="password" name="password" type="password" class="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2" required />
+      </div>
+      <p id="login-error" class="text-sm text-red-400" role="alert"></p>
+      <button type="submit" class="w-full rounded bg-indigo-500 px-4 py-2 font-semibold hover:bg-indigo-400">
+        Se connecter
+      </button>
+    </form>
+    <p class="mt-4 text-sm text-slate-300">
+      Pas de compte ?
+      <a data-link href="${ROUTES.REGISTER}" class="text-indigo-300 hover:underline">Inscription</a>
+    </p>
   `
 
-  const form = page.querySelector('#login-form')
-  const errorBox = page.querySelector('#login-error')
+  const form = section.querySelector('#login-form')
+  const errorBox = section.querySelector('#login-error')
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault()
@@ -56,5 +56,8 @@ export const createLoginPage = () => {
     }
   })
 
-  return page
+  return section
 }
+
+export const createLoginPage = (routeContext = {}) =>
+  createAppShell(() => createLoginForm(), { pathname: routeContext.pathname })

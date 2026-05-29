@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import prisma from '../prisma.js';
 import { validate } from '../validate.js';
 import { RegisterSchema } from './auth.schema.js';
+import { verifyCsrfToken } from '../middleware/csrf.js';
 
 const router = express.Router();
 
@@ -67,7 +68,7 @@ const moi = (req, res) => {
 // -- routes --------
 router.post('/register', validate(RegisterSchema), inscrire);
 router.post('/login', connecter);
-router.post('/logout', deconnecter);
+router.post('/logout', verifyCsrfToken, deconnecter);
 router.get('/me', moi);
 
 export default router;
