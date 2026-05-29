@@ -1,6 +1,6 @@
 # Backend
 
-API Node/Express + Prisma/SQLite. Écoute sur `http://localhost:5000`.
+API Node/Express + Prisma/SQLite. Écoute sur `http://localhost:3000`.
 
 ## Prérequis
 
@@ -72,7 +72,8 @@ DATABASE_URL="file:./test.db" npx prisma migrate deploy
 npm test
 ```
 
-15 tests Jest sur l'authentification (validation NIST, register, login, logout, /me, sessions). Les tests utilisent `test.db` et ne touchent jamais à `dev.db`.
+16 tests Jest sur l'authentification (validation NIST, register, login, logout, /me, sessions). Les tests utilisent `test.db` et ne touchent jamais à `dev.db`.
+Pour info je me suis aidée de Claude pour rédiger les tests.
 
 ## Endpoints
 
@@ -86,13 +87,16 @@ npm test
 | POST | `/auth/register` | Inscription. Body : `{ email, password }`. Politique NIST 800-63b |
 | POST | `/auth/login` | Connexion. Pose le cookie de session |
 | GET | `/csrf-token` | Fournit le token CSRF à mettre dans l'en-tête `x-csrf-token` des mutations |
+| POST | `/csp-reports` | Reçoit les rapports de violation CSP envoyés par les navigateurs |
+| GET | `/uploads/<filename>` | Sert les images uploadées (statique) |
 
 ### Connecté (cookie de session requis)
 
 | Méthode | URL | Description |
 |---|---|---|
 | GET | `/auth/me` | Renvoie l'utilisateur connecté |
-| POST | `/auth/logout` | Détruit la session |
+| POST | `/auth/logout` | Détruit la session (token `x-csrf-token` requis) |
+| GET | `/csp-reports` | Liste des derniers rapports CSP (pour la page d'affichage) |
 
 ### Protégés (cookie de session + en-tête `x-csrf-token` requis)
 
@@ -108,12 +112,13 @@ npm test
 - **Mots de passe** : hash bcrypt (coût 12), politique NIST 800-63b (longueur + blocklist breach corpus / dictionnaire / nom du service)
 - **Sessions** : cookie `httpOnly` + `sameSite: 'lax'`, secret depuis `.env`
 - **CSRF** : token UUID stocké en session, vérifié dans l'en-tête `x-csrf-token` sur les mutations
-- **CORS** : restreint à `http://localhost:3000`, exception ouverte sur `/stats` (exigence du sujet)
+- **CORS** : restreint à `http://localhost:5173`, exception ouverte sur `/stats` (exigence du sujet)
 - **XSS** : validation des entrées via Zod, aucune réinjection en HTML côté back (réponses JSON uniquement)
 - **Anti-énumération** : `POST /auth/login` renvoie le même message pour « mauvais mdp » et « email inconnu »
+- **CSP** : en-tête `Content-Security-Policy` posée sur les réponses API (middleware `cspHeaders`), endpoint de collecte des rapports en base (modèle `CspReport`)
 
 ## Stack
 
-- Express 5, `cors`, `express-session`, `zod`, `bcrypt`
-- Prisma 6 + SQLite (fichiers `prisma/dev.db` et `prisma/test.db`, ignorés par git)
+- Express 5, `cors`, `express-session`, `zod`, `bcrypt`, `multer`
+- Prisma 6 + SQLite (modèles `User`, `Product`, `Image`, `CspReport` — fichiers `prisma/dev.db` et `prisma/test.db`, ignorés par git)
 - Jest + supertest pour les tests

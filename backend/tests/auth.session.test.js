@@ -8,6 +8,7 @@ import prisma from '../src/prisma.js';
 describe('Routes avec session active', () => {
     let hashValide;
     let agent;
+    let csrfToken;
 
     beforeAll(async () => {
         hashValide = await bcrypt.hash('motdepasselong', 12);
@@ -24,6 +25,10 @@ describe('Routes avec session active', () => {
         agent = request.agent(app);
         // On le connecte une fois → cookie posé pour les tests suivants
         await agent.post('/auth/login').send({ email: 'bob@test.fr', password: 'motdepasselong' });
+
+        // POST /auth/logout est protégé par CSRF → on récupère le token pour pouvoir l'envoyer
+        const csrfRes = await agent.get('/csrf-token');
+        csrfToken = csrfRes.body.csrfToken;
     });
 
     afterAll(async () => {
@@ -38,15 +43,24 @@ describe('Routes avec session active', () => {
         expect(response.body.id).toBeDefined();
     });
 
-    test('POST /auth/logout avec session → 204', async () => {
-        const response = await agent.post('/auth/logout');
+    test('POST /auth/logout avec session + token CSRF → 204', async () => {
+        const response = await agent
+            .post('/auth/logout')
+            .set('x-csrf-token', csrfToken);
 
         expect(response.status).toBe(204);
     });
 
+    test('POST /auth/logout sans token CSRF → 403', async () => {
+        const response = await agent.post('/auth/logout');
+
+        expect(response.status).toBe(403);
+        expect(response.body.erreur).toBe('Token CSRF invalide');
+    });
+
     test('Après logout, GET /auth/me renvoie 401', async () => {
-        // Premier appel : on se déconnecte
-        await agent.post('/auth/logout');
+        // Premier appel : on se déconnecte (avec CSRF)
+        await agent.post('/auth/logout').set('x-csrf-token', csrfToken);
         // Deuxième appel : la session a été détruite côté serveur
         const response = await agent.get('/auth/me');
 
