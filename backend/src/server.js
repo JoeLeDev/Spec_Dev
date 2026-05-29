@@ -1,23 +1,38 @@
 import express from 'express';
 import 'dotenv/config';
 import cors from 'cors';
-import productsRouter from './products.js';
-import statsRouter from './stats.js';
+import session from 'express-session';
+import authRouter from './auth/auth.js';
+import productsRouter from './products/products.js';
+import statsRouter from './stats/stats.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 //cors commun aux routes métier
-//n'autoriser que le front à faire des requêtes et credentials pour les cookies de session à venir.
-const corsFront = cors({
-    origin: 'http://localhost:3000',
-    credentials : true,
-});
+//n'autorise que le front à faire des requêtes
+const corsFront = cors({ origin: 'http://localhost:3000', credentials : true });
 
 //cors dédié à /stats qui doit être ouvert à toutes les IP
 const corsOuvert = cors({ origin: '*' });
 
 app.use(express.json());
+
+//session (merci pour l'exemple du cours lol)
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      // passer httpOnly à true rend le cookie invisible pour le JavaScript
+      httpOnly: true,
+      //protection contre CSRF, bien expliqué sur https://contentsquare.com/fr-fr/blog/samesite-cookie-attribute/ et doc express session
+      //ça a l'air pas mal
+      sameSite: 'lax',
+      // passer secure à true rend le cookie fonctionnel uniquement en HTTPS mets la on est en dev HTTP
+      secure: false,
+    },
+}));
 
 app.get('/', (req, res) => {
   res.send('Coucou');
@@ -27,7 +42,14 @@ app.get('/', (req, res) => {
 app.use('/stats', corsOuvert, statsRouter);
 
 // cors restreint
+app.use('/auth', corsFront, authRouter);
 app.use('/products', corsFront, productsRouter);
+
+//middleware d'erreur global (celui d'Express)
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).send('Erreur serveur');
+});
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
