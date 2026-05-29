@@ -32,8 +32,10 @@ const fileFilter = (_req, file, cb) => {
   cb(null, true)
 }
 
+export const MAX_PRODUCT_IMAGES = 10
+
 export const uploadProductImage = multer({
   storage,
   fileFilter,
   limits: { fileSize: 2 * 1024 * 1024 },
-}).single('image')
+}).array('images', MAX_PRODUCT_IMAGES)

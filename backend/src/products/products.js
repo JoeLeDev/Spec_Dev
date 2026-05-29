@@ -1,23 +1,33 @@
 import express from 'express';
 import prisma from '../prisma.js';
-import { uploadProductImage } from '../middleware/uploadProductImage.js';
+import {
+    uploadProductImage,
+    MAX_PRODUCT_IMAGES,
+} from '../middleware/uploadProductImage.js';
 import { verifyCsrfToken } from '../middleware/csrf.js';
 import { requireAuth } from '../middleware/requireAuth.js';
 
 const router = express.Router();
 
-// Lie une image uploadée au produit (remplace les anciennes si besoin).
-const attachImageToProduct = async (productId, file, { replaceExisting = false } = {}) => {
-    if (!file) return;
-
-    const url = `/uploads/${file.filename}`;
+// Lie une ou plusieurs images uploadées au produit (ajout ou remplacement).
+const attachImagesToProduct = async (productId, files, { replaceExisting = false } = {}) => {
+    const uploadedFiles = Array.isArray(files) ? files.filter(Boolean) : [];
+    if (!uploadedFiles.length) return;
 
     if (replaceExisting) {
         await prisma.image.deleteMany({ where: { productId } });
+    } else {
+        const existingCount = await prisma.image.count({ where: { productId } });
+        if (existingCount + uploadedFiles.length > MAX_PRODUCT_IMAGES) {
+            throw new Error(`Maximum ${MAX_PRODUCT_IMAGES} images par produit`);
+        }
     }
 
-    await prisma.image.create({
-        data: { url, productId },
+    await prisma.image.createMany({
+        data: uploadedFiles.map((file) => ({
+            url: `/uploads/${file.filename}`,
+            productId,
+        })),
     });
 };
 
@@ -71,7 +81,7 @@ const createProduit = async (req, res) => {
     if (!produit) return res.status(400).json({ erreur: 'Erreur lors de la création du produit' });
 
     try {
-        await attachImageToProduct(produit.id, req.file);
+        await attachImagesToProduct(produit.id, req.files);
     } catch (error) {
         return res.status(400).json({ erreur: error.message || 'Image invalide' });
     }
@@ -101,7 +111,7 @@ const updateProduit = async (req, res) => {
     if (!produit) return res.status(400).json({ erreur: 'Erreur lors de la mise à jour du produit' });
 
     try {
-        await attachImageToProduct(produit.id, req.file, { replaceExisting: Boolean(req.file) });
+        await attachImagesToProduct(produit.id, req.files);
     } catch (error) {
         return res.status(400).json({ erreur: error.message || 'Image invalide' });
     }

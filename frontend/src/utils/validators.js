@@ -31,6 +31,8 @@ export const validateProductForm = ({ label, description, price, category }) => 
   return ''
 }
 
+export const MAX_PRODUCT_IMAGES = 10
+
 // Valide un fichier image cote UI (type et taille).
 export const validateImageFile = (file) => {
   if (!file) return ''
@@ -42,6 +44,23 @@ export const validateImageFile = (file) => {
 
   const maxSize = 2 * 1024 * 1024
   if (file.size > maxSize) return 'Image trop volumineuse (max 2 Mo).'
+
+  return ''
+}
+
+// Valide une sélection multiple (nombre max + chaque fichier).
+export const validateImageFiles = (fileList, { existingCount = 0 } = {}) => {
+  const files = fileList ? Array.from(fileList) : []
+  if (!files.length) return ''
+
+  if (existingCount + files.length > MAX_PRODUCT_IMAGES) {
+    return `Maximum ${MAX_PRODUCT_IMAGES} images par produit (${existingCount} déjà enregistrée(s)).`
+  }
+
+  for (const file of files) {
+    const error = validateImageFile(file)
+    if (error) return error
+  }
 
   return ''
 }

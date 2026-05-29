@@ -1,18 +1,53 @@
 import { navigateTo } from '../app/router.js'
 import { ROUTES } from '../utils/constants.js'
 import { fetchCsrfToken, getStoredCsrfToken } from '../services/csrfService.js'
-import { getPrimaryImageUrl } from '../utils/productImages.js'
+import { appendProductGallery } from '../utils/productImages.js'
 import {
   createProduct,
   getProductById,
   updateProduct,
 } from '../services/productService.js'
-import { validateImageFile, validateProductForm } from '../utils/validators.js'
+import {
+  MAX_PRODUCT_IMAGES,
+  validateImageFiles,
+  validateProductForm,
+} from '../utils/validators.js'
+
+// Affiche les aperçus locaux des fichiers sélectionnés.
+const renderSelectedPreviews = (container, files, previewUrls) => {
+  container.replaceChildren()
+  previewUrls.forEach((url) => URL.revokeObjectURL(url))
+  previewUrls.length = 0
+
+  if (!files.length) {
+    container.classList.add('hidden')
+    return
+  }
+
+  container.classList.remove('hidden')
+  const grid = document.createElement('div')
+  grid.className = 'mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3'
+
+  files.forEach((file) => {
+    const url = URL.createObjectURL(file)
+    previewUrls.push(url)
+
+    const img = document.createElement('img')
+    img.src = url
+    img.alt = file.name
+    img.className = 'h-28 w-full rounded border border-slate-600 object-cover'
+    grid.append(img)
+  })
+
+  container.append(grid)
+}
 
 // Construit le formulaire CRUD produit (création ou édition).
 export const createProductFormPage = ({ params }) => {
   const productId = params?.id
   const isEditMode = Boolean(productId)
+  const previewUrls = []
+  let existingImageCount = 0
 
   const page = document.createElement('section')
   page.className = 'space-y-4'
@@ -42,10 +77,21 @@ export const createProductFormPage = ({ params }) => {
       <label for="category" class="mb-1 block text-sm">Catégorie</label>
       <input id="category" name="category" class="w-full rounded border border-slate-600 bg-slate-900 px-3 py-2" required />
     </div>
+    <div id="existing-images" class="hidden space-y-2">
+      <p class="text-sm text-slate-300">Images actuelles</p>
+      <div id="existing-images-gallery"></div>
+    </div>
     <div>
-      <label for="image" class="mb-1 block text-sm">Image</label>
-      <input id="image" name="image" type="file" accept="image/jpeg,image/png,image/webp,image/gif" class="w-full text-sm" />
-      <img id="image-preview" alt="Aperçu image" class="mt-2 hidden max-h-40 rounded border border-slate-600" />
+      <label for="images" class="mb-1 block text-sm">Images (jusqu'à ${MAX_PRODUCT_IMAGES}, jpeg/png/webp/gif, 2 Mo max)</label>
+      <input
+        id="images"
+        name="images"
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        multiple
+        class="w-full text-sm"
+      />
+      <div id="image-previews" class="hidden"></div>
     </div>
     <p id="form-error" class="text-sm text-red-400" role="alert"></p>
     <button type="submit" class="w-full rounded bg-indigo-500 px-4 py-2 font-semibold hover:bg-indigo-400">
@@ -60,6 +106,10 @@ export const createProductFormPage = ({ params }) => {
   form.prepend(csrfInput)
 
   const errorBox = form.querySelector('#form-error')
+  const imageInput = form.querySelector('#images')
+  const previewContainer = form.querySelector('#image-previews')
+  const existingImagesBlock = form.querySelector('#existing-images')
+  const existingImagesGallery = form.querySelector('#existing-images-gallery')
 
   fetchCsrfToken()
     .then((token) => {
@@ -68,30 +118,20 @@ export const createProductFormPage = ({ params }) => {
     .catch(() => {
       errorBox.textContent = "Impossible de récupérer le token CSRF. Réconnecte-toi."
     })
-  const imageInput = form.querySelector('#image')
-  const imagePreview = form.querySelector('#image-preview')
 
-  // Affiche un aperçu local de l'image sélectionnée.
   imageInput.addEventListener('change', () => {
-    const file = imageInput.files?.[0]
-    const imageError = validateImageFile(file)
+    const files = Array.from(imageInput.files ?? [])
+    const imageError = validateImageFiles(files, { existingCount: existingImageCount })
     if (imageError) {
       errorBox.textContent = imageError
-      imagePreview.classList.add('hidden')
+      renderSelectedPreviews(previewContainer, [], previewUrls)
       return
     }
 
     errorBox.textContent = ''
-    if (!file) {
-      imagePreview.classList.add('hidden')
-      return
-    }
-
-    imagePreview.src = URL.createObjectURL(file)
-    imagePreview.classList.remove('hidden')
+    renderSelectedPreviews(previewContainer, files, previewUrls)
   })
 
-  // Pre-remplit le formulaire en mode edition.
   if (isEditMode) {
     getProductById(productId).then((product) => {
       if (!product) {
@@ -104,10 +144,10 @@ export const createProductFormPage = ({ params }) => {
       form.price.value = String(product.price ?? '')
       form.category.value = product.category ?? ''
 
-      const existingImageUrl = getPrimaryImageUrl(product)
-      if (existingImageUrl) {
-        imagePreview.src = existingImageUrl
-        imagePreview.classList.remove('hidden')
+      existingImageCount = product.images?.length ?? 0
+      if (existingImageCount > 0) {
+        existingImagesBlock.classList.remove('hidden')
+        appendProductGallery(existingImagesGallery, product)
       }
     })
   }
@@ -131,15 +171,15 @@ export const createProductFormPage = ({ params }) => {
       return
     }
 
-    const imageFile = imageInput.files?.[0]
-    const imageError = validateImageFile(imageFile)
+    const imageFiles = Array.from(imageInput.files ?? [])
+    const imageError = validateImageFiles(imageFiles, { existingCount: existingImageCount })
     if (imageError) {
       errorBox.textContent = imageError
       return
     }
 
-    if (imageFile) {
-      payload.imageFile = imageFile
+    if (imageFiles.length) {
+      payload.imageFiles = imageFiles
     }
 
     try {
@@ -148,6 +188,7 @@ export const createProductFormPage = ({ params }) => {
       } else {
         await createProduct(payload)
       }
+      previewUrls.forEach((url) => URL.revokeObjectURL(url))
       navigateTo(ROUTES.PRODUCTS)
     } catch (error) {
       errorBox.textContent = error.message || "Impossible d'enregistrer le produit."

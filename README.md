@@ -54,7 +54,7 @@ export const API_BASE_URL = 'http://localhost:3000'
 ## Fonctionnalités frontend
 
 - Auth : inscription, connexion, déconnexion (session cookie)
-- Produits : liste, recherche, détail, images
+- Produits : liste, recherche, détail, **plusieurs images** par produit (upload multiple)
 - Panier local (localStorage)
 - Stats catégories (`/stats/categories`)
 - CRUD produit (UI + API)
@@ -136,4 +136,4 @@ frontend/src/
 - CSRF : token session + en-tête `X-CSRF-Token` (produits POST/PUT/DELETE + `POST /auth/logout`)
 - CSP : Report-Only (front) + politique API (back) + collecte `/csp-reports` (persistance SQLite via Prisma)
 - `security.txt` exposé en statique
-- Upload images filtré (type, taille) + stockage `/uploads`
+- Upload images multiple (max 10, type/taille filtrés) + stockage `/uploads`

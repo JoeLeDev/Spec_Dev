@@ -14,6 +14,16 @@ ensureUploadsDir();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const SESSION_SECRET =
+  process.env.SESSION_SECRET ||
+  (process.env.NODE_ENV === 'test' ? 'test-session-secret' : '');
+
+if (!SESSION_SECRET && process.env.NODE_ENV !== 'test') {
+  console.error(
+    'SESSION_SECRET manquant. Copiez backend/.env.example vers backend/.env puis relancez npm run dev.'
+  );
+  process.exit(1);
+}
 
 // CORS front (auth + produits) : origine Vite sur le port 5173.
 const corsFront = cors({
@@ -33,7 +43,7 @@ app.use('/uploads', express.static(UPLOADS_DIR));
 
 //session (merci pour l'exemple du cours lol)
 app.use(session({
-    secret: process.env.SESSION_SECRET,
+    secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
