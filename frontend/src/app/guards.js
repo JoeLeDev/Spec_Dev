@@ -3,22 +3,20 @@ import { ROUTES } from '../utils/constants.js'
 import { navigateTo } from './router.js'
 
 
-export const requireAuth = (renderPage) => () => {
-  // Si l'utilisateur n'est pas authentifié, rediriger vers la page de connexion
+export const requireAuth = (renderPage) => (routeContext = {}) => {
   if (!isAuthenticated()) {
     navigateTo(ROUTES.LOGIN)
     return document.createElement('div')
   }
 
-  return renderPage()
+  return renderPage(routeContext)
 }
 
-export const redirectIfAuthenticated = (renderPage) => () => {
-  // Si l'utilisateur est authentifié, rediriger vers la page de produits
+export const redirectIfAuthenticated = (renderPage) => (routeContext = {}) => {
   if (isAuthenticated()) {
     navigateTo(ROUTES.PRODUCTS)
     return document.createElement('div')
   }
 
-  return renderPage()
+  return renderPage(routeContext)
 }

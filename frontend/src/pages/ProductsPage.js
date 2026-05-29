@@ -1,8 +1,10 @@
-import { getProducts, searchProducts } from '../services/productService.js'
+import { getProducts, searchProducts, deleteProduct } from '../services/productService.js'
 import { addToCart } from '../services/cartService.js'
+import { isAuthenticated } from '../services/authService.js'
+import { ROUTES } from '../utils/constants.js'
 
 // Création de la carte de produit
-const createProductCard = (product, onAdd) => {
+const createProductCard = (product, onAdd, onDeleted, showAdminActions) => {
   const card = document.createElement('article')
   card.className = 'rounded-lg border border-slate-700 bg-slate-800 p-4'
 
@@ -38,8 +40,29 @@ const createProductCard = (product, onAdd) => {
   detailLink.textContent = 'Voir detail'
 
   const actions = document.createElement('div')
-  actions.className = 'flex items-center gap-3'
+  actions.className = 'flex flex-wrap items-center gap-3'
   actions.append(detailLink, button)
+
+  if (showAdminActions) {
+    const editLink = document.createElement('a')
+    editLink.setAttribute('data-link', 'true')
+    editLink.href = `/products/${product.id}/edit`
+    editLink.className = 'text-sm text-amber-300 hover:underline'
+    editLink.textContent = 'Modifier'
+
+    const deleteButton = document.createElement('button')
+    deleteButton.type = 'button'
+    deleteButton.className = 'text-sm text-red-300 hover:underline'
+    deleteButton.textContent = 'Supprimer'
+    deleteButton.addEventListener('click', async () => {
+      const confirmed = window.confirm(`Supprimer "${product.label}" ?`)
+      if (!confirmed) return
+      await deleteProduct(product.id)
+      onDeleted()
+    })
+
+    actions.append(editLink, deleteButton)
+  }
 
   footer.append(price, actions)
   card.append(title, category, description, footer)
@@ -68,12 +91,25 @@ export const createProductsPage = () => {
   feedback.className = 'text-sm text-emerald-300'
   feedback.setAttribute('aria-live', 'polite')
 
-  toolbar.append(input)
+  const adminActions = document.createElement('div')
+  adminActions.className = 'flex gap-3'
+
+  toolbar.append(input, adminActions)
 
   const grid = document.createElement('div')
   grid.className = 'grid gap-4 md:grid-cols-2 lg:grid-cols-3'
 
   let products = []
+  const canManage = isAuthenticated()
+
+  if (canManage) {
+    const newLink = document.createElement('a')
+    newLink.setAttribute('data-link', 'true')
+    newLink.href = ROUTES.PRODUCT_NEW
+    newLink.className = 'rounded bg-emerald-500 px-3 py-2 text-sm font-semibold hover:bg-emerald-400'
+    newLink.textContent = 'Nouveau produit'
+    adminActions.append(newLink)
+  }
 
   // Fonction pour afficher la liste des produits
   const renderList = (query = '') => {
@@ -89,10 +125,18 @@ export const createProductsPage = () => {
     }
 
     filtered.forEach((product) => {
-      const card = createProductCard(product, (selectedProduct) => {
-        addToCart(selectedProduct)
-        feedback.textContent = `${selectedProduct.label} ajoute au panier.`
-      })
+      const card = createProductCard(
+        product,
+        (selectedProduct) => {
+          addToCart(selectedProduct)
+          feedback.textContent = `${selectedProduct.label} ajoute au panier.`
+        },
+        async () => {
+          products = await getProducts()
+          renderList(input.value)
+        },
+        canManage
+      )
       grid.append(card)
     })
   }

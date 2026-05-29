@@ -15,5 +15,11 @@ export const ROUTES = {
   STATS_CATEGORIES: '/stats/categories',
   DASHBOARD: '/dashboard',
   PRODUCT_NEW: '/products/new',
+  PRODUCT_EDIT: '/products/:id/edit',
   CSP_REPORT: '/csp-report',
+}
+
+export const MOCK_STORAGE_KEYS = {
+  PRODUCTS: 'mock_products',
+  CSP_REPORTS: 'csp_reports',
 }

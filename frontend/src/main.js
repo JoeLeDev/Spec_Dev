@@ -9,6 +9,8 @@ import { createCartPage } from './pages/CartPage.js'
 import { createProductDetailPage } from './pages/ProductDetailPage.js'
 import { createDashboardPage } from './pages/DashboardPage.js'
 import { createStatsCategoriesPage } from './pages/StatsCategoriesPage.js'
+import { createProductFormPage } from './pages/ProductFormPage.js'
+import { createCspReportPage } from './pages/CspReportPage.js'
 import { getCartCount } from './services/cartService.js'
 import { redirectIfAuthenticated, requireAuth } from './app/guards.js'
 
@@ -19,6 +21,7 @@ const createPage = (title) => {
   const authLinks = authenticated
     ? `
       <a data-link href="${ROUTES.DASHBOARD}" class="text-indigo-300 hover:underline">Dashboard</a>
+      <a data-link href="${ROUTES.CSP_REPORT}" class="text-indigo-300 hover:underline">CSP</a>
       <button id="logout-btn" class="text-red-300 hover:underline">Déconnexion</button>
     `
     : `
@@ -75,10 +78,13 @@ const withLayout = (contentFactory) => (routeContext = {}) => {
 registerRoute(ROUTES.LOGIN, redirectIfAuthenticated(createLoginPage))
 registerRoute(ROUTES.REGISTER, redirectIfAuthenticated(createRegisterPage))
 registerRoute(ROUTES.PRODUCTS, withLayout(createProductsPage))
+registerRoute(ROUTES.PRODUCT_NEW, requireAuth(withLayout(createProductFormPage)))
+registerRoute(ROUTES.PRODUCT_EDIT, requireAuth(withLayout(createProductFormPage)))
 registerRoute(ROUTES.PRODUCT_DETAIL, withLayout(createProductDetailPage))
 registerRoute(ROUTES.CART, withLayout(createCartPage))
 registerRoute(ROUTES.STATS_CATEGORIES, withLayout(createStatsCategoriesPage))
 registerRoute(ROUTES.DASHBOARD, requireAuth(withLayout(createDashboardPage)))
+registerRoute(ROUTES.CSP_REPORT, requireAuth(withLayout(createCspReportPage)))
 registerRoute('/404', () => createPage('404'))
 
 hydrateAuthFromStorage()

@@ -1,5 +1,8 @@
 import { addToCart } from '../services/cartService.js'
-import { getProductById } from '../services/productService.js'
+import { deleteProduct, getProductById } from '../services/productService.js'
+import { isAuthenticated } from '../services/authService.js'
+import { ROUTES } from '../utils/constants.js'
+import { navigateTo } from '../app/router.js'
 
 // Création de la page de détail du produit
 export const createProductDetailPage = ({ params }) => {
@@ -56,6 +59,30 @@ export const createProductDetailPage = ({ params }) => {
       })
 
       content.append(label, category, description, price, button)
+
+      if (isAuthenticated()) {
+        const adminRow = document.createElement('div')
+        adminRow.className = 'mt-4 flex gap-3'
+
+        const editLink = document.createElement('a')
+        editLink.setAttribute('data-link', 'true')
+        editLink.href = `/products/${product.id}/edit`
+        editLink.className = 'text-sm text-amber-300 hover:underline'
+        editLink.textContent = 'Modifier'
+
+        const deleteButton = document.createElement('button')
+        deleteButton.className = 'text-sm text-red-300 hover:underline'
+        deleteButton.textContent = 'Supprimer'
+        deleteButton.addEventListener('click', async () => {
+          const confirmed = window.confirm(`Supprimer "${product.label}" ?`)
+          if (!confirmed) return
+          await deleteProduct(product.id)
+          navigateTo(ROUTES.PRODUCTS)
+        })
+
+        adminRow.append(editLink, deleteButton)
+        content.append(adminRow)
+      }
     })
     .catch(() => {
       content.textContent = 'Impossible de charger ce produit.'
